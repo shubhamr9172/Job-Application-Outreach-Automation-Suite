@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Job Hunter — Agent Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #00f5a0;
+    --accent2: #7b6cff;
+    --accent3: #ff6c6c;
+    --accent4: #ffb86c;
+    --text: #e2e2f0;
+    --muted: #6b6b8a;
+    --glow: 0 0 20px rgba(0, 245, 160, 0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 2rem 1.5rem 4rem;
+    overflow-x: hidden;
+  }
+
+  /* noise overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.4;
+  }
+
+  .wrap { max-width: 1100px; margin: 0 auto; position: relative; z-index: 1; }
+
+  /* HEADER */
+  header { text-align: center; margin-bottom: 3rem; }
+  header .tag {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 0.3rem 0.8rem;
+    border-radius: 2px;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+  }
+  header h1 {
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  header h1 span { color: var(--accent); }
+  header p {
+    margin-top: 0.8rem;
+    color: var(--muted);
+    font-size: 0.95rem;
+    max-width: 500px;
+    margin-inline: auto;
+  }
+
+  /* CURRENT STATE */
+  .current-box {
+    background: linear-gradient(135deg, rgba(123,108,255,0.08), rgba(0,245,160,0.04));
+    border: 1px solid rgba(123,108,255,0.3);
+    border-radius: 10px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 2.5rem;
+    display: flex; gap: 1.2rem; align-items: flex-start;
+  }
+  .current-box .label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--accent2);
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding-top: 0.1rem;
+  }
+  .current-box p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+  .current-box strong { color: var(--text); }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 0.8rem;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1; height: 1px;
+    background: var(--border);
+  }
+
+  /* AGENT GRID */
+  .agent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 3rem;
+  }
+
+  .agent-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.3rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: default;
+  }
+  .agent-card:hover {
+    transform: translateY(-2px);
+  }
+  .agent-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .agent-card.green::before  { background: var(--accent); }
+  .agent-card.purple::before { background: var(--accent2); }
+  .agent-card.red::before    { background: var(--accent3); }
+  .agent-card.amber::before  { background: var(--accent4); }
+  .agent-card.green:hover  { border-color: rgba(0,245,160,0.3); box-shadow: var(--glow); }
+  .agent-card.purple:hover { border-color: rgba(123,108,255,0.3); box-shadow: 0 0 20px rgba(123,108,255,0.15); }
+  .agent-card.red:hover    { border-color: rgba(255,108,108,0.3); box-shadow: 0 0 20px rgba(255,108,108,0.15); }
+  .agent-card.amber:hover  { border-color: rgba(255,184,108,0.3); box-shadow: 0 0 20px rgba(255,184,108,0.15); }
+
+  .agent-card .you-have {
+    position: absolute; top: 0.9rem; right: 0.9rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--accent);
+    border: 1px solid rgba(0,245,160,0.4);
+    padding: 0.15rem 0.45rem;
+    border-radius: 3px;
+  }
+
+  .agent-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .agent-name {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+    line-height: 1.2;
+  }
+  .agent-card.green  .agent-name { color: var(--accent); }
+  .agent-card.purple .agent-name { color: var(--accent2); }
+  .agent-card.red    .agent-name { color: var(--accent3); }
+  .agent-card.amber  .agent-name { color: var(--accent4); }
+
+  .agent-role {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-bottom: 1rem;
+    font-style: italic;
+  }
+
+  .agent-tasks { list-style: none; }
+  .agent-tasks li {
+    font-size: 0.8rem;
+    color: #ababc8;
+    padding: 0.28rem 0;
+    padding-left: 1.1rem;
+    position: relative;
+    line-height: 1.4;
+  }
+  .agent-tasks li::before {
+    content: '›';
+    position: absolute; left: 0;
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  .agent-tools {
+    margin-top: 1rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--border);
+    display: flex; flex-wrap: wrap; gap: 0.4rem;
+  }
+  .tool-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+  }
+
+  /* ORCHESTRATOR */
+  .orchestrator {
+    background: linear-gradient(135deg, rgba(0,245,160,0.06), rgba(123,108,255,0.06));
+    border: 1px solid rgba(0,245,160,0.25);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 3rem;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.2rem;
+    align-items: start;
+  }
+  .orch-icon {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+  }
+  .orch-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 0.3rem;
+  }
+  .orch-desc {
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .orch-desc strong { color: var(--text); }
+
+  /* FLOW */
+  .flow-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .flow-step {
+    flex: 1; min-width: 120px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.8rem 1rem;
+    font-size: 0.78rem;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .flow-step .step-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+  .flow-arrow {
+    display: flex; align-items: center;
+    color: var(--muted); font-size: 1rem;
+    flex-shrink: 0;
+    align-self: center;
+  }
+
+  /* UPGRADE TABLE */
+  .upgrade-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 3rem;
+    font-size: 0.82rem;
+  }
+  .upgrade-table th {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+    text-align: left;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .upgrade-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(30,30,46,0.5);
+    color: #ababc8;
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  .upgrade-table tr:hover td { background: rgba(255,255,255,0.01); }
+  .upgrade-table td:first-child { color: var(--text); font-weight: 600; }
+  .upgrade-table .old { color: var(--accent3); }
+  .upgrade-table .new { color: var(--accent); }
+
+  /* STACK */
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.8rem;
+    margin-bottom: 2rem;
+  }
+  .stack-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.9rem;
+  }
+  .stack-item .stack-cat {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--accent2);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .stack-item .stack-tools {
+    font-size: 0.8rem;
+    color: var(--text);
+    line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="tag">System Architecture</div>
+    <h1>AI Job Hunter<br><span>Multi-Agent System</span></h1>
+    <p>A complete agent blueprint to automate job discovery, applications, skill gaps & study plans</p>
+  </header>
+
+  <!-- CURRENT STATE -->
+  <div class="current-box">
+    <span class="label">Your Current Setup</span>
+    <p>You have <strong>2 agents in AgentiveHub 2.0</strong>: one that scrapes consultancies & job boards, and one that tailors your resume to a JD. That's a solid foundation — this architecture <strong>adds 7 more specialized agents + an orchestrator</strong> to create a fully autonomous job hunting pipeline with human approval gates.</p>
+  </div>
+
+  <!-- ORCHESTRATOR -->
+  <div class="section-title">Master Controller</div>
+  <div class="orchestrator">
+    <div class="orch-icon">🧠</div>
+    <div>
+      <div class="orch-title">Orchestrator Agent</div>
+      <div class="orch-desc">
+        The brain of the entire system. Receives a <strong>trigger</strong> (manual, scheduled, or event-based), decides which sub-agents to invoke, passes context between them, and maintains <strong>global job state</strong> (applied / interviewing / rejected / offer). It enforces the <strong>human approval gate</strong> — nothing gets sent without your explicit sign-off. Think of it as your personal AI chief-of-staff.
+      </div>
+    </div>
+  </div>
+
+  <!-- AGENTS -->
+  <div class="section-title">Specialized Agents — 9 Total</div>
+  <div class="agent-grid">
+
+    <div class="agent-card green">
+      <div class="you-have">✓ You Have This</div>
+      <div class="agent-num">Agent 01</div>
+      <div class="agent-name">Job Discovery Agent</div>
+      <div class="agent-role">Scout & Aggregator</div>
+      <ul class="agent-tasks">
+        <li>Scrapes LinkedIn, Indeed, Naukri, company career pages</li>
+        <li>Finds consultancies and staffing firms (you already built this)</li>
+        <li>Deduplicates listings across sources</li>
+        <li>Filters by role, location, salary range, tech stack</li>
+        <li>Stores raw JDs in a structured database</li>
+      </ul>
+      <div class="agent-tools">
+        <span class="tool-tag">Selenium/Playwright</span>
+        <span class="tool-tag">BeautifulSoup</span>
+        <span class="tool-tag">Apify</span>
+        <span class="tool-tag">SerpAPI</span>
+      </div>
+    </div>
+
+    <div class="agent-card amber">
+      <div class="agent-num">Agent 02</div>
+      <div class="agent-name">JD Analyzer Agent</div>
+      <div class="agent-role">Intelligence Extractor</div>
+      <ul class="agent-tasks">
+        <li>Parses JD to extract required vs nice-to-have skills</li>
+        <li>Identifies seniority level, team size, culture signals</li>
+        <li>Scores JD match against your profile (0–100)</li>
+        <li>Flags red flags (vague role, unrealistic expectations)</li>
+        <li>Categorizes: Apply Now / Study First / Skip</li>
+      </ul>
+      <div class="agent-tools">
+        <span class="tool-tag">LangChain</span>
+        <span class="tool-tag">Claude API</span>
+        <span class="tool-tag">Structured Output</span>
+      </div>
+    </div>
+
+    <div class="agent-card green">
+      <div class="you-have">✓ You Have This</div>
+      <div class="agent-num">Agent 03</div>
+      <div class="agent-name">Resume Tailor Agent</div>
+      <div class="agent-role">Document Customizer</div>
+      <ul class="agent-tasks">
+        <li>Takes base resume + JD → generates tailored version</li>
+        <li>Rewrites bullet points to mirror JD language</li>
+        <li>Reorders sections based on what employer values</li>
+        <li>ATS keyword optimization pass</li>
+        <li>Outputs PDF + LaTeX (you already use LaTeX!)</li>
+      </ul>
+      <div class="agent-tools">
+        <span class="tool-tag">LangChain</span>
+        <span class="tool-tag">LaTeX</span>
+        <span class="tool-tag">Gemini API</span>
+        <span class="tool-tag">PyPDF</span>
+      </div>
+    </div>
+
+    <div class="agent-card purple">
+      <div class="agent-num">Agent 04</div>
+      <div class="agent-name">Cover Letter Agent</div>
+      <div class="agent-role">Persuasion Writer</div>
+      <ul class="agent-tasks">
+        <li>Generates personalized cover letters per JD</li>
+        <li>References specific company values & recent news</li>
+        <li>Adapts tone: startup (casual) vs enterprise (formal)</li>
+        <li>3 variants: concise / story-driven / achievement-led</li>
+        <li>Surfaces draft for your review before sending</li>
+      </ul>
+      <div class="agent-tools">
+        <span class="tool-tag">LangChain</span>
+        <span class="tool-tag">Web Search Tool</span>
+        <span class="tool-tag">Claude API</span>
+      </div>
+    </div>
+
+    <div class="agent-card amber">
+      <div class="agent-num">Agent 05</div>
+      <div class="agent-name">Skill Gap Agent</div>
+      <div class="agent-role">Learning Strategist</div>
+      <ul class="agent-tasks">
+        <li>Compares your skill profile vs JD requirements</li>
+        <li>Quantifies gap severity (days to close, not just yes/no)</li>
+        <li>Finds free resources: YouTube, docs, DeepLearning.AI</li>
+        <li>Outputs a prioritized study plan with timeline</li>
+        <li>Tracks your learning progress over time</li>
+      </ul>
+      <div class="agent-tools">
+        <span class="tool-tag">LangChain</span>
+        <span class="tool-tag">Web Search</span>
+        <span class="tool-tag">JSON State</span>
+      </div>
+    </div>
+
+    <div class="agent-card purple">
+      <div class="agent-num">Agent 06</div>
+      <div class="agent-name">Application Tracker Agent</div>
+      <div class="agent-role">Pipeline Manager</div>
+      <ul class="agent-tasks">
+        <li>Logs every application with date, role, company, status</li>
+        <li>Monitors email/inbox for replies, rejections, interview calls</li>
+        <li>Sends follow-up reminders if no reply in 7 days</li>
+        <li>Generates weekly pipeline summary report</li>
+        <li>Escalates hot leads to your attention immediately</li>
+      </ul>
+      <div class="agent-tools">
+        <span class="tool-tag">Gmail MCP</span>
+        <span class="tool-tag">Notion/Airtable</span>
+        <span class="tool-tag">SQLite</span>
+      </div>
+    </div>
+
+    <div class="agent-card red">
+      <div class="agent-num">Agent 07</div>
+      <div class="agent-name">Interview Prep Agent</div>
+      <div class="agent-role">Mock Interviewer</div>
+      <ul class="agent-tasks">
+        <li>Generates role-specific Q&A based on JD + your resume</li>
+        <li>Creates system design questions for AI/ML roles</li>
+        <li>Simulates a full mock interview (you answer, it evaluates)</li>
+        <li>Identifies weak answers and suggests improvements</li>
+        <li>Builds a personalized STAR story bank</li>
+      </ul>
+      <div class="agent-tools">
+        <span class="tool-tag">Claude API</span>
+        <span class="tool-tag">Multi-turn Chat</span>
+        <span class="tool-tag">Memory</span>
+      </div>
+    </div>
+
+    <div class="agent-card red">
+      <div class="agent-num">Agent 08</div>
+      <div class="agent-name">Company Research Agent</div>
+      <div class="agent-role">Intel Gatherer</div>
+      <ul class="agent-tasks">
+        <li>Researches company: funding, team, tech stack, culture</li>
+        <li>Finds Glassdoor reviews & salary ranges</li>
+        <li>Identifies the hiring manager on LinkedIn</li>
+        <li>Scans recent news (product launches, layoffs, growth)</li>
+        <li>Produces a 1-page company brief before each interview</li>
+      </ul>
+      <div class="agent-tools">
+        <span class="tool-tag">Web Search</span>
+        <span class="tool-tag">LinkedIn API</span>
+        <span class="tool-tag">Tavily</span>
+      </div>
+    </div>
+
+    <div class="agent-card amber">
+      <div class="agent-num">Agent 09</div>
+      <div class="agent-name">Outreach Agent</div>
+      <div class="agent-role">Network Builder</div>
+      <ul class="agent-tasks">
+        <li>Drafts personalized LinkedIn connection requests</li>
+        <li>Writes cold emails to hiring managers & recruiters</li>
+        <li>Schedules follow-ups in sequence (Day 1, Day 5, Day 10)</li>
+        <li>All messages require YOUR approval before sending</li>
+        <li>Tracks reply rates to improve messaging over time</li>
+      </ul>
+      <div class="agent-tools">
+        <span class="tool-tag">Gmail MCP</span>
+        <span class="tool-tag">Claude API</span>
+        <span class="tool-tag">Approval Gate</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FLOW -->
+  <div class="section-title">Execution Flow — One Job Cycle</div>
+  <div style="margin-bottom: 3rem;">
+    <div class="flow-row">
+      <div class="flow-step"><span class="step-num">STEP 01</span>Job Discovery Agent scrapes 50+ new listings overnight</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><span class="step-num">STEP 02</span>JD Analyzer scores each listing. Top matches sent to you</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><span class="step-num">STEP 03</span>You approve list of roles to target (human gate #1)</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step"><span class="step-num">STEP 04</span>Resume Tailor + Cover Letter Agent generate docs per role</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><span class="step-num">STEP 05</span>Skill Gap Agent flags what to study before applying</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><span class="step-num">STEP 06</span>You review + approve applications (human gate #2)</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-step"><span class="step-num">STEP 07</span>Tracker logs application. Outreach Agent drafts follow-ups</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><span class="step-num">STEP 08</span>Interview called → Company Research + Prep Agent activates</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><span class="step-num">STEP 09</span>You walk in prepared. Tracker updates status post-interview</div>
+    </div>
+  </div>
+
+  <!-- UPGRADES TABLE -->
+  <div class="section-title">What Makes This 100x Better</div>
+  <table class="upgrade-table" style="margin-bottom: 3rem;">
+    <thead>
+      <tr>
+        <th>Dimension</th>
+        <th class="old">Your Current System</th>
+        <th class="new">With Full Multi-Agent System</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Job Discovery</td>
+        <td class="old">Scrapes consultancies only</td>
+        <td class="new">LinkedIn + Naukri + Indeed + direct career pages + consultancies</td>
+      </tr>
+      <tr>
+        <td>Job Prioritization</td>
+        <td class="old">Manual, you read every JD</td>
+        <td class="new">Auto-scored 0–100, only top matches surfaced to you</td>
+      </tr>
+      <tr>
+        <td>Resume Tailoring</td>
+        <td class="old">You have this ✓</td>
+        <td class="new">+ ATS keyword pass + LaTeX output + version tracking</td>
+      </tr>
+      <tr>
+        <td>Cover Letters</td>
+        <td class="old">None / manual</td>
+        <td class="new">Auto-generated, 3 tone variants, company-specific research</td>
+      </tr>
+      <tr>
+        <td>Skill Gaps</td>
+        <td class="old">You guess what to study</td>
+        <td class="new">Per-JD gap analysis with day-by-day study plan</td>
+      </tr>
+      <tr>
+        <td>Application Tracking</td>
+        <td class="old">Spreadsheet or memory</td>
+        <td class="new">Auto-logged, inbox monitored, follow-ups triggered</td>
+      </tr>
+      <tr>
+        <td>Interview Prep</td>
+        <td class="old">Generic prep</td>
+        <td class="new">Role-specific Q&A generated from your resume + JD</td>
+      </tr>
+      <tr>
+        <td>Outreach</td>
+        <td class="old">None</td>
+        <td class="new">Personalized cold emails to hiring managers, sequenced</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- TECH STACK -->
+  <div class="section-title">Recommended Tech Stack</div>
+  <div class="stack-grid">
+    <div class="stack-item">
+      <div class="stack-cat">Orchestration</div>
+      <div class="stack-tools">LangGraph<br>CrewAI<br>AgentiveHub 2.0</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-cat">LLM</div>
+      <div class="stack-tools">Claude API (Sonnet)<br>Gemini API<br>NVIDIA NIM</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-cat">Scraping</div>
+      <div class="stack-tools">Playwright<br>Apify<br>SerpAPI / Tavily</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-cat">Storage</div>
+      <div class="stack-tools">SQLite / PostgreSQL<br>ChromaDB (skills RAG)<br>Notion / Airtable</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-cat">Email / Comms</div>
+      <div class="stack-tools">Gmail MCP<br>SMTP (smtplib)<br>Twilio (SMS alerts)</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-cat">Resume Output</div>
+      <div class="stack-tools">LaTeX + PDFLatex<br>python-docx<br>Jinja2 templates</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-cat">Deployment</div>
+      <div class="stack-tools">Docker<br>GitHub Actions<br>GCP Cloud Run</div>
+    </div>
+    <div class="stack-item">
+      <div class="stack-cat">Scheduling</div>
+      <div class="stack-tools">APScheduler<br>Cron (GCP)<br>Celery + Redis</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

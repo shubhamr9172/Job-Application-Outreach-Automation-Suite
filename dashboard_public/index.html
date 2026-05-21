@@ -1,0 +1,2773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shubham's Job Outreach & Tracker Dashboard</title>
+    <meta name="description" content="Track cold email outreach, manual web form applications, and recruiter replies in real time.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- CSS Reset & Variables ------------------------------------------ */
+        :root {
+            --bg-color: #080710;
+            --panel-bg: rgba(255, 255, 255, 0.03);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --panel-border-hover: rgba(255, 255, 255, 0.18);
+            
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            
+            /* Accent Colors */
+            --accent-primary: #6366f1; /* Indigo */
+            --accent-primary-glow: rgba(99, 102, 241, 0.15);
+            --accent-secondary: #14b8a6; /* Teal */
+            --accent-secondary-glow: rgba(20, 184, 166, 0.15);
+            
+            /* Status Colors */
+            --status-sent: #22c55e;
+            --status-sent-glow: rgba(34, 197, 94, 0.15);
+            --status-webform: #f59e0b;
+            --status-webform-glow: rgba(245, 158, 11, 0.15);
+            --status-pending: #3b82f6;
+            --status-pending-glow: rgba(59, 130, 246, 0.15);
+            --status-responded: #a855f7;
+            --status-responded-glow: rgba(168, 85, 247, 0.15);
+            --status-skipped: #64748b;
+            --status-skipped-glow: rgba(100, 116, 139, 0.15);
+            --status-interview: #ec4899;
+            --status-interview-glow: rgba(236, 72, 153, 0.15);
+            
+            --font-sans: 'Plus Jakarta Sans', sans-serif;
+            --font-display: 'Space Grotesk', sans-serif;
+            
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(20, 184, 166, 0.08) 0%, transparent 40%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        /* --- Custom Scrollbar ----------------------------------------------- */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.01);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* --- Header & Layout ------------------------------------------------ */
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 1.5rem;
+        }
+
+        .header-title h1 {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary) 30%, var(--accent-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .header-title p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+
+        .sync-btn {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-family: var(--font-sans);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+            transition: var(--transition-smooth);
+        }
+
+        .sync-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(99, 102, 241, 0.5);
+        }
+
+        .sync-btn:active {
+            transform: translateY(0);
+        }
+
+        .sync-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+            transition: transform 0.8s ease;
+        }
+
+        .sync-btn.loading svg {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- Dashboard Grid Layout ------------------------------------------ */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 3.2fr 1.8fr;
+            }
+        }
+
+        /* --- Stats Panel ---------------------------------------------------- */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (min-width: 640px) {
+            .stats-row {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .stat-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 1.25rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: transparent;
+        }
+
+        .stat-card.total::before { background: var(--text-primary); }
+        .stat-card.sent::before { background: var(--status-sent); }
+        .stat-card.webform::before { background: var(--status-webform); }
+        .stat-card.replies::before { background: var(--status-responded); }
+
+        .stat-card:hover {
+            border-color: var(--panel-border-hover);
+            transform: translateY(-2px);
+        }
+
+        .stat-card h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-card .sub-value {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* --- Filters & Search Controls -------------------------------------- */
+        .controls-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .controls-card {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+        }
+
+        .search-wrapper {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--panel-border);
+            color: var(--text-primary);
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border-radius: 12px;
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            transition: var(--transition-smooth);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            fill: var(--text-muted);
+        }
+
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--panel-border);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .filter-btn:hover {
+            border-color: var(--panel-border-hover);
+            color: var(--text-primary);
+        }
+
+        .filter-btn.active {
+            background: var(--accent-primary-glow);
+            border-color: var(--accent-primary);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* --- Consultancies Kanban Grid -------------------------------------- */
+        .consultancies-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        @media (min-width: 640px) {
+            .consultancies-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 960px) {
+            .consultancies-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .consultancy-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 1.25rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: var(--transition-smooth);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .consultancy-card:hover {
+            border-color: var(--panel-border-hover);
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .category-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 100px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: capitalize;
+            padding: 0.25rem 0.6rem;
+            border-radius: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* Status Styling States */
+        .status-sent .status-dot { background-color: var(--status-sent); box-shadow: 0 0 8px var(--status-sent); }
+        .status-sent { background: var(--status-sent-glow); color: var(--status-sent); }
+        
+        .status-pending_web_form .status-dot { background-color: var(--status-webform); box-shadow: 0 0 8px var(--status-webform); }
+        .status-pending_web_form { background: var(--status-webform-glow); color: var(--status-webform); }
+        
+        .status-pending_email .status-dot { background-color: var(--status-pending); box-shadow: 0 0 8px var(--status-pending); }
+        .status-pending_email { background: var(--status-pending-glow); color: var(--status-pending); }
+        
+        .status-responded .status-dot { background-color: var(--status-responded); box-shadow: 0 0 8px var(--status-responded); animation: pulse-glow 1.5s infinite; }
+        .status-responded { background: var(--status-responded-glow); color: var(--status-responded); }
+
+        .status-skipped .status-dot { background-color: var(--status-skipped); }
+        .status-skipped { background: var(--status-skipped-glow); color: var(--status-skipped); }
+
+        .status-interviewing .status-dot { background-color: var(--status-interview); box-shadow: 0 0 8px var(--status-interview); animation: pulse-glow 1.5s infinite; }
+        .status-interviewing { background: var(--status-interview-glow); color: var(--status-interview); }
+
+        @keyframes pulse-glow {
+            0% { transform: scale(0.9); opacity: 0.6; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.6; }
+        }
+
+        .card-body h4 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-family: var(--font-display);
+            letter-spacing: -0.01em;
+        }
+
+        .card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .card-info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-info-item svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--text-muted);
+        }
+
+        .card-info-item a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: var(--transition-smooth);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .card-info-item a:hover {
+            color: var(--accent-secondary);
+            text-decoration: underline;
+        }
+
+        .card-note {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: rgba(0, 0, 0, 0.15);
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 1.25rem;
+            min-height: 2.2rem;
+            border-left: 2px solid var(--accent-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .card-btn {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--panel-border);
+            color: var(--text-primary);
+            padding: 0.5rem;
+            border-radius: 10px;
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            transition: var(--transition-smooth);
+        }
+
+        .card-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--panel-border-hover);
+        }
+
+        .card-btn.action-primary {
+            background: var(--accent-primary-glow);
+            border-color: var(--accent-primary);
+            color: var(--text-primary);
+        }
+
+        .card-btn.action-primary:hover {
+            background: rgba(99, 102, 241, 0.3);
+        }
+
+        .card-btn svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        /* --- Recruiter Replies Side Panel ----------------------------------- */
+        .replies-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            max-height: 80vh;
+            position: sticky;
+            top: 2rem;
+        }
+
+        .replies-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        .replies-header h2 {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .replies-count-badge {
+            background: var(--status-responded-glow);
+            color: var(--status-responded);
+            border: 1px solid var(--status-responded);
+            font-size: 0.75rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+
+        .replies-list {
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            flex: 1;
+            padding-right: 0.25rem;
+        }
+
+        .reply-item {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 1rem;
+            transition: var(--transition-smooth);
+            position: relative;
+        }
+
+        .reply-item:hover {
+            border-color: var(--status-responded);
+            background: rgba(168, 85, 247, 0.02);
+        }
+
+        .reply-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .reply-company {
+            color: var(--status-responded);
+            font-weight: 700;
+            font-family: var(--font-display);
+            text-transform: uppercase;
+        }
+
+        .reply-date {
+            color: var(--text-muted);
+        }
+
+        .reply-sender {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .reply-subject {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-style: italic;
+        }
+
+        .reply-snippet {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            margin-bottom: 0.75rem;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+
+        .reply-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .reply-action-btn {
+            background: var(--status-interview-glow);
+            border: 1px solid var(--status-interview);
+            color: var(--status-interview);
+            padding: 0.35rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .reply-action-btn:hover {
+            background: var(--status-interview);
+            color: white;
+            box-shadow: 0 0 10px rgba(236, 72, 153, 0.3);
+        }
+
+        .empty-replies {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 3rem 1rem;
+            gap: 0.75rem;
+        }
+
+        .empty-replies svg {
+            width: 40px;
+            height: 40px;
+            fill: var(--text-muted);
+            opacity: 0.5;
+        }
+
+        /* --- Details Modal -------------------------------------------------- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-container {
+            background: #11101d;
+            border: 1px solid var(--panel-border-hover);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-overlay.active .modal-container {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: var(--transition-smooth);
+        }
+
+        .modal-close-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-close-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--panel-border);
+            color: var(--text-primary);
+            padding: 0.75rem;
+            border-radius: 10px;
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            transition: var(--transition-smooth);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--panel-border);
+            color: var(--text-secondary);
+            padding: 0.65rem 1.25rem;
+            border-radius: 10px;
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            border: none;
+            color: white;
+            padding: 0.65rem 1.25rem;
+            border-radius: 10px;
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            transition: var(--transition-smooth);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(99, 102, 241, 0.5);
+        }
+
+        /* --- Toast System --------------------------------------------------- */
+        .toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .toast {
+            background: rgba(17, 16, 29, 0.95);
+            border-left: 4px solid var(--accent-secondary);
+            border-top: 1px solid var(--panel-border);
+            border-bottom: 1px solid var(--panel-border);
+            border-right: 1px solid var(--panel-border);
+            padding: 1rem 1.5rem;
+            border-radius: 0 12px 12px 0;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateX(120%);
+            animation: slide-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes slide-in {
+            to { transform: translateX(0); }
+        }
+
+        .toast.success { border-left-color: var(--status-sent); }
+        .toast.error { border-left-color: var(--status-interview); }
+        .toast.info { border-left-color: var(--status-pending); }
+
+        /* --- Tab Navigation ------------------------------------------------- */
+        .tab-nav {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 0;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition-smooth);
+        }
+
+        .tab-btn:hover {
+            color: var(--text-secondary);
+        }
+
+        .tab-btn.active {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 2px 2px 0 0;
+        }
+
+        .tab-badge {
+            background: var(--accent-primary-glow);
+            color: var(--accent-primary);
+            border: 1px solid var(--accent-primary);
+            font-size: 0.7rem;
+            padding: 0.1rem 0.45rem;
+            border-radius: 20px;
+            font-weight: 700;
+            margin-left: 0.4rem;
+            vertical-align: middle;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* --- Discovered Agency Cards ---------------------------------------- */
+        .discovered-card {
+            background: var(--panel-bg);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 16px;
+            padding: 1.25rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .discovered-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+        }
+
+        .discovered-card:hover {
+            border-color: rgba(99, 102, 241, 0.35);
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.1);
+        }
+
+        .discovered-card h4 {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .discovered-source {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            color: var(--accent-primary);
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 100px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .discovered-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        .discovered-snippet {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            background: rgba(0, 0, 0, 0.15);
+            padding: 0.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+            max-height: 3.5em;
+            overflow: hidden;
+        }
+
+        .discovered-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-approve {
+            flex: 1;
+            background: var(--status-sent-glow);
+            border: 1px solid var(--status-sent);
+            color: var(--status-sent);
+            padding: 0.5rem;
+            border-radius: 10px;
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-approve:hover {
+            background: var(--status-sent);
+            color: white;
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-reject {
+            flex: 1;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #ef4444;
+            padding: 0.5rem;
+            border-radius: 10px;
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-reject:hover {
+            background: #ef4444;
+            color: white;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .discovered-empty {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem;
+            color: var(--text-muted);
+        }
+
+        .discovered-empty svg {
+            width: 48px;
+            height: 48px;
+            fill: var(--text-muted);
+            opacity: 0.4;
+            margin-bottom: 1rem;
+        }
+
+        /* --- Job Listing Cards ---------------------------------------------- */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .section-header h2 {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+        .section-header p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .section-divider {
+            border: none;
+            border-top: 1px solid var(--panel-border);
+            margin: 2.5rem 0;
+        }
+
+        .scraper-btn {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            color: white;
+            border: none;
+            padding: 0.7rem 1.4rem;
+            border-radius: 12px;
+            font-family: var(--font-sans);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
+            transition: var(--transition-smooth);
+            flex-shrink: 0;
+        }
+        .scraper-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(245, 158, 11, 0.5);
+        }
+        .scraper-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .scraper-btn.running {
+            background: linear-gradient(135deg, #64748b, #475569);
+            box-shadow: 0 4px 20px rgba(100, 116, 139, 0.3);
+        }
+        .scraper-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+        .scraper-btn.running svg {
+            animation: spin 1s linear infinite;
+        }
+
+        .job-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 1.25rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+        }
+        .job-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-secondary), var(--accent-primary));
+        }
+        .job-card:hover {
+            border-color: var(--panel-border-hover);
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+        }
+        .job-card .job-title {
+            font-family: var(--font-display);
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.35rem;
+        }
+        .job-card .job-company {
+            font-size: 0.85rem;
+            color: var(--accent-secondary);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .job-card .job-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .job-meta-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 0.2rem 0.6rem;
+            border-radius: 100px;
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .job-meta-tag svg {
+            width: 12px;
+            height: 12px;
+            fill: var(--text-muted);
+        }
+        .job-card .job-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        .job-card .job-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .job-card .job-actions .btn-approve,
+        .job-card .job-actions .btn-reject {
+            flex: 1;
+        }
+
+        /* Tracked Job Status Tags */
+        .job-status-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .job-status-tag.pending_apply {
+            background: var(--status-pending-glow);
+            color: var(--status-pending);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .job-status-tag.applied {
+            background: var(--status-sent-glow);
+            color: var(--status-sent);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        .job-status-tag.interviewing {
+            background: var(--status-interview-glow);
+            color: var(--status-interview);
+            border: 1px solid rgba(236, 72, 153, 0.3);
+        }
+        .job-status-tag.rejected_app {
+            background: var(--status-skipped-glow);
+            color: var(--status-skipped);
+            border: 1px solid rgba(100, 116, 139, 0.3);
+        }
+        .job-status-tag.offer {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .tracked-job-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 1.25rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: var(--transition-smooth);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .tracked-job-card:hover {
+            border-color: var(--panel-border-hover);
+            transform: translateY(-2px);
+        }
+        .tracked-job-card .tj-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .tracked-job-card .tj-title {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .tracked-job-card .tj-company {
+            font-size: 0.85rem;
+            color: var(--accent-secondary);
+            font-weight: 600;
+        }
+        .tracked-job-card .tj-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .tracked-job-card .tj-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .tracked-job-card .tj-actions button {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--panel-border);
+            color: var(--text-secondary);
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-family: var(--font-sans);
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+        .tracked-job-card .tj-actions button:hover {
+            border-color: var(--accent-primary);
+            color: var(--text-primary);
+        }
+        .tracked-job-card .tj-notes {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* --- Settings Panel ------------------------------------------------- */
+        .settings-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            max-width: 720px;
+        }
+        .settings-panel h2 {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            margin-bottom: 0.35rem;
+        }
+        .settings-panel .settings-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+        }
+        @media (min-width: 640px) {
+            .settings-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .settings-grid .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .checkbox-group input[type="checkbox"] {
+            accent-color: var(--accent-primary);
+            width: 16px;
+            height: 16px;
+        }
+        .settings-save-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        /* --- Controls row & dropdowns for Job tab --- */
+        .controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+        }
+        .controls-select {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--panel-border);
+            color: var(--text-primary);
+            padding: 0.5rem 1.75rem 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-family: var(--font-sans);
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            min-width: 140px;
+            outline: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23a1a1aa'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1.25rem;
+        }
+        .controls-select:focus {
+            border-color: var(--accent-primary);
+        }
+        .controls-search {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+        .controls-search .search-input {
+            padding: 0.5rem 0.75rem 0.5rem 2.2rem;
+            font-size: 0.82rem;
+            border-radius: 8px;
+        }
+        .controls-search .search-icon {
+            width: 14px;
+            height: 14px;
+            left: 0.75rem;
+        }
+        
+        /* Resume Dropzone Styles */
+        .resume-dropzone {
+            border: 2px dashed rgba(255, 255, 255, 0.15) !important;
+            background: rgba(255, 255, 255, 0.02) !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        .resume-dropzone:hover {
+            border-color: var(--accent-primary) !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+            box-shadow: 0 0 15px rgba(29, 78, 216, 0.1) !important;
+            transform: translateY(-1px);
+        }
+        .resume-dropzone:active {
+            transform: translateY(0);
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <!-- Header -->
+        <header>
+            <div class="header-title">
+                <h1>Job Application & Outreach Dashboard</h1>
+                <p>Track cold email outreach, manual web form applications, and recruiter replies</p>
+            </div>
+            <button id="syncInboxBtn" class="sync-btn" onclick="syncInbox()">
+                <svg viewBox="0 0 24 24">
+                    <path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/>
+                </svg>
+                <span>Sync Gmail Replies</span>
+            </button>
+        </header>
+
+        <!-- Stats Counter Section -->
+        <div class="stats-row">
+            <div class="stat-card total">
+                <h3>Total Agencies</h3>
+                <div id="statTotal" class="value">-</div>
+                <div class="sub-value">Imported from Excel</div>
+            </div>
+            <div class="stat-card sent">
+                <h3>Cold Emails Sent</h3>
+                <div id="statSent" class="value">-</div>
+                <div id="statSentPct" class="sub-value">-</div>
+            </div>
+            <div class="stat-card webform">
+                <h3>Pending Web Forms</h3>
+                <div id="statWebForm" class="value">-</div>
+                <div class="sub-value">Needs manual submission</div>
+            </div>
+            <div class="stat-card replies">
+                <h3>Inbox Replies</h3>
+                <div id="statReplies" class="value">-</div>
+                <div class="sub-value">AI Domain-matched</div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('outreach', this)">Outreach Tracker</button>
+            <button class="tab-btn" onclick="switchTab('discovered', this)">Discovered Agencies <span id="discoveredBadge" class="tab-badge" style="display:none;">0</span></button>
+            <button class="tab-btn" onclick="switchTab('jobs', this)">Job Listings <span id="jobsBadge" class="tab-badge" style="display:none;">0</span></button>
+            <button class="tab-btn" onclick="switchTab('settings', this)">⚙ Settings</button>
+        </div>
+
+        <!-- TAB 1: Main Outreach Dashboard -->
+        <div id="tab-outreach" class="tab-content active">
+            <!-- Main Dashboard Split Content -->
+            <div class="dashboard-grid">
+                
+                <!-- Left Side: Consultancies Grid -->
+                <div>
+                    <!-- Controls: Search & Filters -->
+                    <div class="controls-card">
+                        <div class="search-wrapper">
+                            <svg class="search-icon" viewBox="0 0 24 24">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 5 9.5 11.99 5 14 5s9 5 9 9.5-2.01 4.5-4.5 4.5z"/>
+                            </svg>
+                            <input id="searchInput" type="text" class="search-input" placeholder="Search agencies, categories, emails..." oninput="filterConsultancies()">
+                        </div>
+                        
+                        <div class="filter-buttons">
+                            <button class="filter-btn active" data-filter="all" onclick="setFilter('all', this)">All</button>
+                            <button class="filter-btn" data-filter="sent" onclick="setFilter('sent', this)">Sent</button>
+                            <button class="filter-btn" data-filter="pending_email" onclick="setFilter('pending_email', this)">Pending Email</button>
+                            <button class="filter-btn" data-filter="pending_web_form" onclick="setFilter('pending_web_form', this)">Pending Web Form</button>
+                            <button class="filter-btn" data-filter="responded" onclick="setFilter('responded', this)">Responded</button>
+                            <button class="filter-btn" data-filter="interviewing" onclick="setFilter('interviewing', this)">Interviewing</button>
+                        </div>
+                    </div>
+
+                    <!-- Consultancy Grid Container -->
+                    <div id="consultanciesGrid" class="consultancies-grid">
+                        <!-- Cards will be populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Right Side: Recruiter Replies Feed -->
+                <div>
+                    <div class="replies-panel">
+                        <div class="replies-header">
+                            <h2>
+                                Recruiter Replies
+                                <span id="repliesCount" class="replies-count-badge">0</span>
+                            </h2>
+                        </div>
+                        <div id="repliesList" class="replies-list">
+                            <!-- Loading skeleton / Empty state by default -->
+                            <div class="empty-replies">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                                </svg>
+                                <p>Sync inbox to check for matching recruiter replies.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- TAB 2: Discovered Agencies -->
+        <div id="tab-discovered" class="tab-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <div>
+                    <h2 style="font-family:var(--font-display); font-size:1.4rem; color:var(--text-primary); margin-bottom:0.25rem;">Discovered Agencies</h2>
+                    <p style="font-size:0.85rem; color:var(--text-secondary);">Agencies found by the web scraper. Review and approve to add them to your outreach pipeline.</p>
+                </div>
+                <button class="sync-btn" onclick="fetchDiscovered()" style="flex-shrink:0;">
+                    <svg viewBox="0 0 24 24"><path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/></svg>
+                    <span>Refresh</span>
+                </button>
+            </div>
+            <div id="discoveredGrid" class="consultancies-grid">
+                <div class="discovered-empty">
+                    <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                    <p style="font-size:1.1rem; margin-bottom:0.5rem;">No discovered agencies yet</p>
+                    <p style="font-size:0.85rem;">Run <code style="background:rgba(255,255,255,0.08); padding:0.15rem 0.4rem; border-radius:4px;">python agency_scraper.py</code> to discover new agencies.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: Job Listings -->
+        <div id="tab-jobs" class="tab-content">
+            <!-- Discovered Jobs Section -->
+            <div class="section-header">
+                <div>
+                    <h2>Discovered Job Postings</h2>
+                    <p>AI-scraped job postings matching your resume. Approve to track, reject to dismiss.</p>
+                </div>
+                <button id="scraperBtn" class="scraper-btn" onclick="triggerScraper()">
+                    <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                    <span>Run Job Scraper</span>
+                </button>
+            </div>
+
+            <!-- Filters & Sorting for Discovered Jobs -->
+            <div class="controls-row">
+                <div class="controls-search">
+                    <svg class="search-icon" viewBox="0 0 24 24">
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                    </svg>
+                    <input id="jobDiscoveredSearch" type="text" class="search-input" placeholder="Search title, company, location..." oninput="filterDiscoveredJobs()">
+                </div>
+                <select id="jobDiscoveredSourceFilter" class="controls-select" onchange="filterDiscoveredJobs()">
+                    <option value="all">All Sources</option>
+                </select>
+                <select id="jobDiscoveredSort" class="controls-select" onchange="filterDiscoveredJobs()">
+                    <option value="newest">Newest Discovered</option>
+                    <option value="oldest">Oldest Discovered</option>
+                    <option value="company">Company (A-Z)</option>
+                    <option value="title">Job Title (A-Z)</option>
+                </select>
+            </div>
+
+            <div id="discoveredJobsGrid" class="consultancies-grid">
+                <div class="discovered-empty">
+                    <svg viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>
+                    <p style="font-size:1.1rem; margin-bottom:0.5rem;">No discovered jobs yet</p>
+                    <p style="font-size:0.85rem;">Click <strong>Run Job Scraper</strong> to search for jobs matching your resume.</p>
+                </div>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- Tracked Applications Section -->
+            <div class="section-header">
+                <div>
+                    <h2>Tracked Applications</h2>
+                    <p>Jobs you've approved. Track your application status here.</p>
+                </div>
+            </div>
+
+            <!-- Filters & Sorting for Tracked Applications -->
+            <div class="controls-row">
+                <div class="controls-search">
+                    <svg class="search-icon" viewBox="0 0 24 24">
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                    </svg>
+                    <input id="jobTrackedSearch" type="text" class="search-input" placeholder="Search title, company, location, notes..." oninput="filterTrackedJobs()">
+                </div>
+                <select id="jobTrackedStatusFilter" class="controls-select" onchange="filterTrackedJobs()">
+                    <option value="all">All Statuses</option>
+                    <option value="pending_apply">Pending Apply</option>
+                    <option value="applied">Applied</option>
+                    <option value="interviewing">Interviewing</option>
+                    <option value="offer">Offer 🎉</option>
+                    <option value="rejected_app">Rejected</option>
+                </select>
+                <select id="jobTrackedSort" class="controls-select" onchange="filterTrackedJobs()">
+                    <option value="updated">Latest Activity / Updated</option>
+                    <option value="added">Latest Added</option>
+                    <option value="company">Company (A-Z)</option>
+                </select>
+            </div>
+
+            <div id="trackedJobsGrid" class="consultancies-grid">
+                <div class="discovered-empty">
+                    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+                    <p style="font-size:1.1rem; margin-bottom:0.5rem;">No tracked applications</p>
+                    <p style="font-size:0.85rem;">Approve discovered jobs to start tracking them.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: Settings -->
+        <div id="tab-settings" class="tab-content">
+            <div class="settings-panel">
+                <h2>Job Search Configuration</h2>
+                <p class="settings-desc">Configure your search preferences. These are used by the Job Scraper to find relevant postings.</p>
+                <form id="configForm" onsubmit="saveConfig(event)">
+                    <div class="settings-grid">
+                        <div class="form-group">
+                            <label for="cfgLocation">Target Location</label>
+                            <input id="cfgLocation" class="form-control" type="text" placeholder="e.g. India, Remote, USA">
+                        </div>
+                        <div class="form-group">
+                            <label for="cfgExperience">Experience Level</label>
+                            <select id="cfgExperience" class="form-control">
+                                <option value="Entry">Entry Level</option>
+                                <option value="Mid">Mid Level</option>
+                                <option value="Mid-Senior">Mid-Senior</option>
+                                <option value="Senior">Senior</option>
+                                <option value="Lead">Lead / Staff</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="cfgKeywords">Additional Search Keywords</label>
+                            <input id="cfgKeywords" class="form-control" type="text" placeholder="e.g. Python, Machine Learning, DevOps (comma-separated)">
+                        </div>
+                        <div class="form-group">
+                            <label for="cfgResume">Resume File Path</label>
+                            <input id="cfgResume" class="form-control" type="text" placeholder="Resume.tex">
+                        </div>
+                        <div class="form-group">
+                            <label for="cfgContext">Career Context File Path</label>
+                            <input id="cfgContext" class="form-control" type="text" placeholder="# Shubham — Career Context File.md">
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Enabled Search Sources</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" value="google_ats" class="src-check" checked> Google ATS Boards</label>
+                                <label><input type="checkbox" value="naukri" class="src-check" checked> Naukri</label>
+                                <label><input type="checkbox" value="linkedin" class="src-check"> LinkedIn</label>
+                                <label><input type="checkbox" value="indeed" class="src-check"> Indeed</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top: 2rem; margin-bottom: 0.5rem; font-size: 1.1rem; color: var(--accent-primary);">Candidate Auto-fill Profile</h3>
+                    <p class="settings-desc" style="margin-bottom: 1.25rem;">Provide candidate information for the Chrome Extension to automatically populate on job application pages.</p>
+                    
+                    <!-- Resume Parser File Drop Zone -->
+                    <div id="resumeDropZone" class="resume-dropzone" style="margin-bottom: 1.5rem; padding: 1.5rem; border: 2px dashed rgba(255,255,255,0.15); border-radius: 8px; text-align: center; background: rgba(255,255,255,0.02); transition: all 0.3s ease; cursor: pointer; position: relative;">
+                        <input type="file" id="resumeFileInput" accept=".pdf,.txt,.tex,.md" style="display: none;">
+                        <div class="dropzone-icon" style="font-size: 1.75rem; margin-bottom: 0.5rem; color: var(--accent-primary);">📄</div>
+                        <div class="dropzone-text" style="font-size: 0.9rem; font-weight: 500; margin-bottom: 0.25rem;">Drag & drop your Resume PDF, TeX, or Text file here</div>
+                        <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">or click to select a file. We will parse it to auto-populate the fields below.</div>
+                        
+                        <!-- Uploading/Parsing progress overlay -->
+                        <div id="resumeParseLoader" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); border-radius: 8px; align-items: center; justify-content: center; flex-direction: column; z-index: 10;">
+                            <div class="spinner-border" role="status" style="width: 1.5rem; height: 1.5rem; border: 3px solid rgba(255,255,255,0.15); border-top: 3px solid var(--accent-primary); animation: spin 1s linear infinite; border-radius: 50%;"></div>
+                            <span style="font-size: 0.85rem; margin-top: 0.5rem; font-weight: 500; color: var(--accent-primary);">Parsing resume and extracting details...</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-grid">
+                        <div class="form-group">
+                            <label for="cfgProfileFullName">Full Name</label>
+                            <input id="cfgProfileFullName" class="form-control" type="text" placeholder="e.g. John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label for="cfgProfileEmail">Email Address</label>
+                            <input id="cfgProfileEmail" class="form-control" type="email" placeholder="e.g. john@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="cfgProfilePhone">Phone Number</label>
+                            <input id="cfgProfilePhone" class="form-control" type="text" placeholder="e.g. +1 123 456 7890">
+                        </div>
+                        <div class="form-group">
+                            <label for="cfgProfileCompany">Current Company</label>
+                            <input id="cfgProfileCompany" class="form-control" type="text" placeholder="e.g. Acme Corp">
+                        </div>
+                        <div class="form-group">
+                            <label for="cfgProfileLinkedIn">LinkedIn Profile URL</label>
+                            <input id="cfgProfileLinkedIn" class="form-control" type="text" placeholder="https://linkedin.com/in/username">
+                        </div>
+                        <div class="form-group">
+                            <label for="cfgProfileGitHub">GitHub URL</label>
+                            <input id="cfgProfileGitHub" class="form-control" type="text" placeholder="https://github.com/username">
+                        </div>
+                        <div class="form-group">
+                            <label for="cfgProfilePortfolio">Portfolio / Website URL</label>
+                            <input id="cfgProfilePortfolio" class="form-control" type="text" placeholder="https://username.github.io">
+                        </div>
+                        <div class="form-group">
+                            <label for="cfgProfileExperience">Years of Experience</label>
+                            <input id="cfgProfileExperience" class="form-control" type="number" min="0" max="50" placeholder="e.g. 5">
+                        </div>
+                    </div>
+
+                    <div class="settings-save-row">
+                        <button type="submit" class="btn-primary">Save Configuration</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Edit/Update Details Modal -->
+    <div id="editModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modalTitle">Update Agency Status</h3>
+                <button class="modal-close-btn" onclick="closeModal()">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="editForm" onsubmit="saveAgencyChanges(event)">
+                <input type="hidden" id="editAgencyName">
+                
+                <div class="form-group">
+                    <label for="editStatus">Status</label>
+                    <select id="editStatus" class="form-control">
+                        <option value="pending_email">Pending Email (Has contact email)</option>
+                        <option value="pending_web_form">Pending Web Form (Submit on website)</option>
+                        <option value="sent">Emailed / Applied</option>
+                        <option value="responded">Responded / Replied</option>
+                        <option value="interviewing">Interview / Screening Scheduled</option>
+                        <option value="skipped">Skipped</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editNote">Outreach Notes / Log</label>
+                    <textarea id="editNote" class="form-control" placeholder="E.g., Sent follow-up, scheduled phone screen, form submitted on site..."></textarea>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- --- JavaScript Dashboard Logic ----------------------------------------- -->
+    <script>
+        // State variables
+        let consultancies = [];
+        let currentFilter = 'all';
+        let currentSearchQuery = '';
+
+        // API Endpoint Constants
+        const API_STATUS = '/api/status';
+        const API_UPDATE = '/api/update';
+        const API_REPLIES = '/api/replies';
+        const API_DISCOVERED = '/api/discovered';
+        const API_DISCOVERED_APPROVE = '/api/discovered/approve';
+        const API_DISCOVERED_REJECT = '/api/discovered/reject';
+        const API_CONFIG = '/api/config';
+        const API_JOBS_DISCOVERED = '/api/jobs/discovered';
+        const API_JOBS_STATUS = '/api/jobs/status';
+        const API_JOBS_UPDATE = '/api/jobs/update';
+        const API_JOBS_APPROVE = '/api/jobs/discovered/approve';
+        const API_JOBS_REJECT = '/api/jobs/discovered/reject';
+        const API_JOBS_SCRAPE = '/api/jobs/scrape';
+
+        let discoveredAgencies = [];
+        let discoveredJobs = [];
+        let trackedJobs = [];
+
+        // Search & Filter state for Job Listings tab
+        let discoveredSearchVal = '';
+        let discoveredSourceVal = 'all';
+        let discoveredSortVal = 'newest';
+
+        let trackedSearchVal = '';
+        let trackedStatusVal = 'all';
+        let trackedSortVal = 'updated';
+
+        function filterDiscoveredJobs() {
+            discoveredSearchVal = document.getElementById('jobDiscoveredSearch').value.trim().toLowerCase();
+            discoveredSourceVal = document.getElementById('jobDiscoveredSourceFilter').value;
+            discoveredSortVal = document.getElementById('jobDiscoveredSort').value;
+            renderDiscoveredJobs();
+        }
+
+        function filterTrackedJobs() {
+            trackedSearchVal = document.getElementById('jobTrackedSearch').value.trim().toLowerCase();
+            trackedStatusVal = document.getElementById('jobTrackedStatusFilter').value;
+            trackedSortVal = document.getElementById('jobTrackedSort').value;
+            renderTrackedJobs();
+        }
+
+        // Load data on window load
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchStatus();
+            fetchDiscovered();
+            fetchDiscoveredJobs();
+            fetchTrackedJobs();
+            fetchConfig();
+        });
+
+        // --- Tab Switching ---------------------------------------------------
+        function switchTab(tabName, btnEl) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            btnEl.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        // --- Fetch & Populate Data ------------------------------------------
+        async function fetchStatus() {
+            try {
+                const response = await fetch(API_STATUS);
+                if (!response.ok) throw new Error('Failed to fetch status data');
+                
+                consultancies = await response.ok ? await response.json() : [];
+                updateStats();
+                renderGrid();
+            } catch (err) {
+                showToast('Error loading agency status: ' + err.message, 'error');
+            }
+        }
+
+        // --- Stats & Numbers Calculator --------------------------------------
+        function updateStats() {
+            const total = consultancies.length;
+            const sent = consultancies.filter(c => c.status === 'sent').length;
+            const webform = consultancies.filter(c => c.status === 'pending_web_form').length;
+            const responded = consultancies.filter(c => c.status === 'responded' || c.status === 'interviewing').length;
+
+            document.getElementById('statTotal').innerText = total;
+            document.getElementById('statSent').innerText = sent;
+            
+            const sentPct = total > 0 ? Math.round((sent / total) * 100) : 0;
+            document.getElementById('statSentPct').innerText = `${sentPct}% of total list`;
+            
+            document.getElementById('statWebForm').innerText = webform;
+            document.getElementById('statReplies').innerText = responded;
+        }
+
+        // --- Filter and Search Controllers -----------------------------------
+        function setFilter(filterType, btnElement) {
+            currentFilter = filterType;
+            
+            // Toggle active styling
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+            
+            renderGrid();
+        }
+
+        function filterConsultancies() {
+            currentSearchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+            renderGrid();
+        }
+
+        // --- Render Cards Grid ----------------------------------------------
+        function renderGrid() {
+            const grid = document.getElementById('consultanciesGrid');
+            grid.innerHTML = '';
+
+            const filtered = consultancies.filter(c => {
+                // Apply filter category match
+                if (currentFilter !== 'all' && c.status !== currentFilter) {
+                    return false;
+                }
+                
+                // Apply search text query match
+                if (currentSearchQuery) {
+                    const nameMatch = c.name.toLowerCase().includes(currentSearchQuery);
+                    const catMatch = c.category.toLowerCase().includes(currentSearchQuery);
+                    const emailMatch = c.email.toLowerCase().includes(currentSearchQuery);
+                    const noteMatch = c.note.toLowerCase().includes(currentSearchQuery);
+                    return nameMatch || catMatch || emailMatch || noteMatch;
+                }
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: var(--text-muted);">
+                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">No agencies found</p>
+                        <p style="font-size: 0.9rem;">Try adjusting your search query or filter criteria.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(c => {
+                const card = document.createElement('div');
+                card.className = 'consultancy-card';
+
+                // Setup website/email info line
+                let contactInfo = '';
+                if (c.email) {
+                    contactInfo += `
+                        <div class="card-info-item">
+                            <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                            <a href="mailto:${c.email}">${c.email}</a>
+                        </div>
+                    `;
+                }
+                if (c.website) {
+                    contactInfo += `
+                        <div class="card-info-item">
+                            <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.33-.14 2 0 .67.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 0 1 5.08 16zm2.95-8H5.08a8.03 8.03 0 0 1 3.79-3.56 15.65 15.65 0 0 0-1.38 3.56zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.33-.16-2 0-.67.07-1.34.16-2h4.68c.09.66.16 1.33.16 2 0 .67-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a7.987 7.987 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.33.14-2 0-.67-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>
+                            <a href="${c.website}" target="_blank">${c.website}</a>
+                        </div>
+                    `;
+                }
+
+                // Friendly Status Text Mapper
+                const statusLabelMap = {
+                    'pending_email': 'Pending Email',
+                    'pending_web_form': 'Pending Web Form',
+                    'sent': 'Emailed',
+                    'responded': 'Responded',
+                    'interviewing': 'Interviewing',
+                    'skipped': 'Skipped'
+                };
+
+                card.innerHTML = `
+                    <div>
+                        <div class="card-header">
+                            <span class="category-badge">${c.category}</span>
+                            <span class="status-indicator status-${c.status}">
+                                <span class="status-dot"></span>
+                                ${statusLabelMap[c.status] || c.status}
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <h4>${c.name}</h4>
+                            <div class="card-info">
+                                ${contactInfo}
+                            </div>
+                            ${c.note ? `<div class="card-note" title="${c.note}">${c.note}</div>` : '<div style="margin-bottom:1.25rem;"></div>'}
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="card-btn action-primary" onclick="openEditModal('${escapeHtml(c.name)}', '${escapeHtml(c.status)}', '${escapeHtml(c.note)}')">
+                            <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                            Update
+                        </button>
+                        ${c.website ? `
+                            <button class="card-btn" onclick="window.open('${c.website}', '_blank')">
+                                <svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                                Visit Site
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        // --- Fetch & Domains-Match Inbox Emails -------------------------------
+        async function syncInbox() {
+            const btn = document.getElementById('syncInboxBtn');
+            const spanText = btn.querySelector('span');
+            btn.classList.add('loading');
+            spanText.innerText = 'Scanning Inbox...';
+
+            const list = document.getElementById('repliesList');
+            list.innerHTML = `
+                <div style="text-align: center; padding: 4rem 1rem; color: var(--text-muted);">
+                    <div style="margin-bottom: 1rem;" class="sync-btn loading"><svg viewBox="0 0 24 24" style="width:32px;height:32px;fill:var(--accent-secondary);"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm-8 8c0 1.57.46 3.03 1.24 4.26L6.7 17.7C5.25 16.2 4.42 14.2 4.42 12c0-4.42 3.58-8 8-8v3l4-4-4-4v3c-4.42 0-8 3.58-8 8z"/></svg></div>
+                    <p style="font-size: 0.95rem;">Checking IMAP inbox and running domain-matching checks...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(API_REPLIES);
+                if (!response.ok) throw new Error('API server returned error');
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Populate Replies list
+                renderReplies(data);
+                
+                // Re-fetch status list since backend sets "responded" for matched companies
+                fetchStatus();
+                showToast(`Scan complete: found ${data.length} matching recruiter replies!`, 'success');
+            } catch (err) {
+                showToast('Gmail Sync Failed: ' + err.message, 'error');
+                list.innerHTML = `
+                    <div class="empty-replies">
+                        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                        <p style="color:var(--status-interview)">Scan Failed</p>
+                        <p style="font-size:0.8rem; max-width: 250px;">${err.message}. Make sure your GMAIL_APP_PASSWORD is set correctly in .env.</p>
+                    </div>
+                `;
+            } finally {
+                btn.classList.remove('loading');
+                spanText.innerText = 'Sync Gmail Replies';
+            }
+        }
+
+        function renderReplies(replies) {
+            const list = document.getElementById('repliesList');
+            const countBadge = document.getElementById('repliesCount');
+            list.innerHTML = '';
+            
+            countBadge.innerText = replies.length;
+
+            if (replies.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-replies">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                        </svg>
+                        <p>No matching replies found in the last 50 inbox messages.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            replies.forEach(r => {
+                const item = document.createElement('div');
+                item.className = 'reply-item';
+                item.innerHTML = `
+                    <div class="reply-meta">
+                        <span class="reply-company">${r.company}</span>
+                        <span class="reply-date">${formatEmailDate(r.date)}</span>
+                    </div>
+                    <div class="reply-sender">${escapeHtml(r.sender)}</div>
+                    <div class="reply-subject">${escapeHtml(r.subject)}</div>
+                    <div class="reply-snippet">${escapeHtml(r.snippet)}</div>
+                    <div class="reply-actions">
+                        <button class="reply-action-btn" onclick="quickUpdateToInterview('${escapeHtml(r.company)}')">
+                            Move to Interviewing
+                        </button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        async function quickUpdateToInterview(name) {
+            try {
+                const payload = { name, status: 'interviewing', note: 'AI Auto-Reply Match: Recruiter emailed. Setting to Interviewing status.' };
+                const response = await fetch(API_UPDATE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.ok) {
+                    showToast(`${name} status updated to Interviewing!`, 'success');
+                    fetchStatus();
+                } else {
+                    throw new Error('Save status request failed');
+                }
+            } catch (err) {
+                showToast('Failed to update status: ' + err.message, 'error');
+            }
+        }
+
+        // --- Modal Controllers ----------------------------------------------
+        function openEditModal(name, status, note) {
+            document.getElementById('editAgencyName').value = name;
+            document.getElementById('modalTitle').innerText = name;
+            document.getElementById('editStatus').value = status;
+            document.getElementById('editNote').value = note === 'undefined' ? '' : note;
+            
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+
+        async function saveAgencyChanges(event) {
+            event.preventDefault();
+            const name = document.getElementById('editAgencyName').value;
+            const status = document.getElementById('editStatus').value;
+            const note = document.getElementById('editNote').value;
+
+            try {
+                const response = await fetch(API_UPDATE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, status, note })
+                });
+
+                if (!response.ok) throw new Error('Network response error');
+                
+                showToast('Status updated successfully!', 'success');
+                closeModal();
+                fetchStatus();
+            } catch (err) {
+                showToast('Failed to update changes: ' + err.message, 'error');
+            }
+        }
+
+        // --- Custom Toast Notification Alerts --------------------------------
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let icon = '';
+            if (type === 'success') {
+                icon = '<svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:var(--status-sent);"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
+            } else if (type === 'error') {
+                icon = '<svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:var(--status-interview);"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>';
+            } else {
+                icon = '<svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:var(--status-pending);"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>';
+            }
+
+            toast.innerHTML = `
+                ${icon}
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+
+            // Auto dismiss toast
+            setTimeout(() => {
+                toast.style.animation = 'slide-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) reverse forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // --- Helper Formatting Utilities ------------------------------------
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function formatEmailDate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                // Remove timezone abbreviations that JS parser might choke on, like "(IST)"
+                const cleanDate = dateStr.replace(/\s\([^)]+\)$/, '');
+                const date = new Date(cleanDate);
+                if (isNaN(date.getTime())) return dateStr;
+                return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            } catch (e) {
+                return dateStr;
+            }
+        }
+
+        // --- Discovered Agencies Logic ----------------------------------------
+        async function fetchDiscovered() {
+            try {
+                const response = await fetch(API_DISCOVERED);
+                if (!response.ok) throw new Error('Failed to fetch discovered agencies');
+                discoveredAgencies = await response.json();
+                renderDiscoveredGrid();
+                // Update badge
+                const badge = document.getElementById('discoveredBadge');
+                if (discoveredAgencies.length > 0) {
+                    badge.textContent = discoveredAgencies.length;
+                    badge.style.display = 'inline';
+                } else {
+                    badge.style.display = 'none';
+                }
+            } catch (err) {
+                console.error('Discovered fetch error:', err);
+            }
+        }
+
+        function renderDiscoveredGrid() {
+            const grid = document.getElementById('discoveredGrid');
+            grid.innerHTML = '';
+
+            if (discoveredAgencies.length === 0) {
+                grid.innerHTML = `
+                    <div class="discovered-empty">
+                        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                        <p style="font-size:1.1rem; margin-bottom:0.5rem;">No discovered agencies yet</p>
+                        <p style="font-size:0.85rem;">Run <code style="background:rgba(255,255,255,0.08); padding:0.15rem 0.4rem; border-radius:4px;">python agency_scraper.py</code> to discover new agencies.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            discoveredAgencies.forEach(agency => {
+                const card = document.createElement('div');
+                card.className = 'discovered-card';
+                card.innerHTML = `
+                    <span class="discovered-source">${escapeHtml(agency.source || 'scraper')}</span>
+                    <h4>${escapeHtml(agency.name)}</h4>
+                    <div class="discovered-info">
+                        ${agency.email ? `<div class="card-info-item">
+                            <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:var(--text-muted);"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                            <span>${escapeHtml(agency.email)}</span>
+                        </div>` : '<div style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">No email found</div>'}
+                        ${agency.website ? `<div class="card-info-item">
+                            <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:var(--text-muted);"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.91 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.9-4.33-3.56zm2.95-8H5.08c.96-1.66 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.96 1.65-2.49 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>
+                            <a href="${escapeHtml(agency.website)}" target="_blank" rel="noopener">${escapeHtml(agency.website.replace(/^https?:\/\//, '').substring(0, 35))}</a>
+                        </div>` : ''}
+                    </div>
+                    ${agency.snippet ? `<div class="discovered-snippet">${escapeHtml(agency.snippet)}</div>` : ''}
+                    <div class="discovered-actions">
+                        <button class="btn-approve" onclick="approveAgency('${escapeHtml(agency.name).replace(/'/g, "\\'")}')">✓ Approve & Add</button>
+                        <button class="btn-reject" onclick="rejectAgency('${escapeHtml(agency.name).replace(/'/g, "\\'")}')">✕ Reject</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function approveAgency(name) {
+            try {
+                const response = await fetch(API_DISCOVERED_APPROVE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                if (!response.ok) throw new Error('Approval failed');
+                showToast(`Approved: ${name} — added to outreach pipeline!`, 'success');
+                fetchDiscovered();
+                fetchStatus();  // Refresh main grid too
+            } catch (err) {
+                showToast('Failed to approve: ' + err.message, 'error');
+            }
+        }
+
+        async function rejectAgency(name) {
+            try {
+                const response = await fetch(API_DISCOVERED_REJECT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                if (!response.ok) throw new Error('Rejection failed');
+                showToast(`Rejected: ${name}`, 'info');
+                fetchDiscovered();
+            } catch (err) {
+                showToast('Failed to reject: ' + err.message, 'error');
+            }
+        }
+
+        // --- Job Listings Logic -----------------------------------------------
+        function populateDiscoveredSources() {
+            const select = document.getElementById('jobDiscoveredSourceFilter');
+            if (!select) return;
+            const currentVal = select.value;
+            
+            const sources = new Set();
+            discoveredJobs.forEach(job => {
+                if (job.source) {
+                    sources.add(job.source.toLowerCase().trim());
+                }
+            });
+            
+            select.innerHTML = '<option value="all">All Sources</option>';
+            Array.from(sources).sort().forEach(src => {
+                const opt = document.createElement('option');
+                opt.value = src;
+                opt.textContent = src.charAt(0).toUpperCase() + src.slice(1);
+                select.appendChild(opt);
+            });
+            
+            if (Array.from(sources).includes(currentVal)) {
+                select.value = currentVal;
+            } else {
+                select.value = 'all';
+                discoveredSourceVal = 'all';
+            }
+        }
+
+        async function fetchDiscoveredJobs() {
+            try {
+                const response = await fetch(API_JOBS_DISCOVERED);
+                if (!response.ok) throw new Error('Failed to fetch discovered jobs');
+                discoveredJobs = await response.json();
+                
+                populateDiscoveredSources();
+                renderDiscoveredJobs();
+                
+                const badge = document.getElementById('jobsBadge');
+                if (discoveredJobs.length > 0) {
+                    badge.textContent = discoveredJobs.length;
+                    badge.style.display = 'inline';
+                } else {
+                    badge.style.display = 'none';
+                }
+            } catch (err) {
+                console.error('Discovered jobs fetch error:', err);
+            }
+        }
+
+        function renderDiscoveredJobs() {
+            const grid = document.getElementById('discoveredJobsGrid');
+            grid.innerHTML = '';
+
+            // Apply search & source filters
+            let filtered = discoveredJobs.filter(job => {
+                if (discoveredSourceVal !== 'all' && (job.source || '').toLowerCase().trim() !== discoveredSourceVal) {
+                    return false;
+                }
+                if (discoveredSearchVal) {
+                    const titleMatch = (job.title || '').toLowerCase().includes(discoveredSearchVal);
+                    const companyMatch = (job.company || '').toLowerCase().includes(discoveredSearchVal);
+                    const locMatch = (job.location || '').toLowerCase().includes(discoveredSearchVal);
+                    const descMatch = (job.description || '').toLowerCase().includes(discoveredSearchVal);
+                    if (!titleMatch && !companyMatch && !locMatch && !descMatch) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            // Sort filtered jobs
+            filtered.sort((a, b) => {
+                if (discoveredSortVal === 'newest') {
+                    const dateA = a.discovered_at || '';
+                    const dateB = b.discovered_at || '';
+                    return dateB.localeCompare(dateA);
+                } else if (discoveredSortVal === 'oldest') {
+                    const dateA = a.discovered_at || '';
+                    const dateB = b.discovered_at || '';
+                    return dateA.localeCompare(dateB);
+                } else if (discoveredSortVal === 'company') {
+                    const compA = a.company || '';
+                    const compB = b.company || '';
+                    return compA.localeCompare(compB);
+                } else if (discoveredSortVal === 'title') {
+                    const titleA = a.title || '';
+                    const titleB = b.title || '';
+                    return titleA.localeCompare(titleB);
+                }
+                return 0;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="discovered-empty">
+                        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                        <p style="font-size:1.1rem; margin-bottom:0.5rem;">No matching jobs found</p>
+                        <p style="font-size:0.85rem;">Try adjusting your search query or source filter.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(job => {
+                const card = document.createElement('div');
+                card.className = 'job-card';
+                card.innerHTML = `
+                    <div class="job-title">${escapeHtml(job.title || 'Untitled Position')}</div>
+                    <div class="job-company">${escapeHtml(job.company || 'Unknown Company')}</div>
+                    <div class="job-meta">
+                        ${job.location ? `<span class="job-meta-tag"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>${escapeHtml(job.location)}</span>` : ''}
+                        ${job.source ? `<span class="job-meta-tag"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg>${escapeHtml(job.source)}</span>` : ''}
+                        ${job.discovered_at ? `<span class="job-meta-tag"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>Discovered ${formatEmailDate(job.discovered_at)}</span>` : ''}
+                    </div>
+                    ${job.description ? `<div class="job-desc">${escapeHtml(job.description)}</div>` : ''}
+                    <div class="job-actions">
+                        <button class="btn-approve" onclick="approveJob('${escapeHtml(job.link).replace(/'/g, "\\'")}')">✓ Approve &amp; Track</button>
+                        <button class="btn-reject" onclick="rejectJob('${escapeHtml(job.link).replace(/'/g, "\\'")}')">✕ Skip</button>
+                        ${job.link ? `<button class="card-btn" onclick="window.open('${escapeHtml(job.link)}', '_blank')" title="Open job posting"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg></button>` : ''}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function approveJob(link) {
+            try {
+                const response = await fetch(API_JOBS_APPROVE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ link })
+                });
+                if (!response.ok) throw new Error('Approval failed');
+                showToast('Job approved and added to tracked applications!', 'success');
+                fetchDiscoveredJobs();
+                fetchTrackedJobs();
+            } catch (err) {
+                showToast('Failed to approve job: ' + err.message, 'error');
+            }
+        }
+
+        async function rejectJob(link) {
+            try {
+                const response = await fetch(API_JOBS_REJECT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ link })
+                });
+                if (!response.ok) throw new Error('Rejection failed');
+                showToast('Job dismissed.', 'info');
+                fetchDiscoveredJobs();
+            } catch (err) {
+                showToast('Failed to reject job: ' + err.message, 'error');
+            }
+        }
+
+        async function fetchTrackedJobs() {
+            try {
+                const response = await fetch(API_JOBS_STATUS);
+                if (!response.ok) throw new Error('Failed to fetch tracked jobs');
+                trackedJobs = await response.json();
+                renderTrackedJobs();
+            } catch (err) {
+                console.error('Tracked jobs fetch error:', err);
+            }
+        }
+
+        function renderTrackedJobs() {
+            const grid = document.getElementById('trackedJobsGrid');
+            grid.innerHTML = '';
+
+            // Apply search & status filters
+            let filtered = trackedJobs.filter(job => {
+                if (trackedStatusVal !== 'all' && (job.status || '').trim() !== trackedStatusVal) {
+                    return false;
+                }
+                if (trackedSearchVal) {
+                    const titleMatch = (job.title || '').toLowerCase().includes(trackedSearchVal);
+                    const companyMatch = (job.company || '').toLowerCase().includes(trackedSearchVal);
+                    const locMatch = (job.location || '').toLowerCase().includes(trackedSearchVal);
+                    const notesMatch = (job.notes || '').toLowerCase().includes(trackedSearchVal);
+                    if (!titleMatch && !companyMatch && !locMatch && !notesMatch) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            // Sort filtered tracked jobs
+            filtered.sort((a, b) => {
+                if (trackedSortVal === 'updated') {
+                    const dateA = a.updated_at || a.added_at || '';
+                    const dateB = b.updated_at || b.added_at || '';
+                    return dateB.localeCompare(dateA);
+                } else if (trackedSortVal === 'added') {
+                    const dateA = a.added_at || '';
+                    const dateB = b.added_at || '';
+                    return dateB.localeCompare(dateA);
+                } else if (trackedSortVal === 'company') {
+                    const compA = a.company || '';
+                    const compB = b.company || '';
+                    return compA.localeCompare(compB);
+                }
+                return 0;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="discovered-empty">
+                        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+                        <p style="font-size:1.1rem; margin-bottom:0.5rem;">No matching applications found</p>
+                        <p style="font-size:0.85rem;">Try adjusting your search query or status filter.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const statusLabels = {
+                'pending_apply': 'Pending Apply',
+                'applied': 'Applied',
+                'interviewing': 'Interviewing',
+                'rejected_app': 'Rejected',
+                'offer': 'Offer'
+            };
+
+            filtered.forEach(job => {
+                const card = document.createElement('div');
+                card.className = 'tracked-job-card';
+                const statusClass = (job.status || 'pending_apply').trim();
+                card.innerHTML = `
+                    <div class="tj-header">
+                        <div>
+                            <div class="tj-title">${escapeHtml(job.title || 'Untitled')}</div>
+                            <div class="tj-company">${escapeHtml(job.company || '')}</div>
+                        </div>
+                        <span class="job-status-tag ${statusClass}">${statusLabels[statusClass] || statusClass}</span>
+                    </div>
+                    <div class="tj-meta">
+                        ${job.location ? `<span>${escapeHtml(job.location)}</span>` : ''}
+                        ${job.source ? `<span>via ${escapeHtml(job.source)}</span>` : ''}
+                        ${job.added_at ? `<span>Added ${formatEmailDate(job.added_at)}</span>` : ''}
+                        ${job.updated_at ? `<span>Updated ${formatEmailDate(job.updated_at)}</span>` : ''}
+                    </div>
+                    ${job.notes ? `<div class="tj-notes">"${escapeHtml(job.notes)}"</div>` : ''}
+                    <div class="tj-actions">
+                        <button onclick="updateTrackedJobStatus('${escapeHtml(job.link).replace(/'/g, "\\'")}',' applied')">Mark Applied</button>
+                        <button onclick="updateTrackedJobStatus('${escapeHtml(job.link).replace(/'/g, "\\'")}',' interviewing')">Interviewing</button>
+                        <button onclick="updateTrackedJobStatus('${escapeHtml(job.link).replace(/'/g, "\\'")}',' offer')">Offer 🎉</button>
+                        <button onclick="updateTrackedJobStatus('${escapeHtml(job.link).replace(/'/g, "\\'")}',' rejected_app')">Rejected</button>
+                        ${job.link ? `<button onclick="window.open('${escapeHtml(job.link)}', '_blank')">Open ↗</button>` : ''}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function updateTrackedJobStatus(link, newStatus) {
+            try {
+                const response = await fetch(API_JOBS_UPDATE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ link: link, status: newStatus.trim() })
+                });
+                if (!response.ok) throw new Error('Update failed');
+                showToast('Job status updated!', 'success');
+                fetchTrackedJobs();
+            } catch (err) {
+                showToast('Failed to update: ' + err.message, 'error');
+            }
+        }
+
+        async function triggerScraper() {
+            const btn = document.getElementById('scraperBtn');
+            const span = btn.querySelector('span');
+            btn.classList.add('running');
+            btn.disabled = true;
+            span.textContent = 'Scraper Running...';
+
+            try {
+                const response = await fetch(API_JOBS_SCRAPE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: '{}'
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Scraper failed to start');
+                }
+                showToast('Job scraper started in background! Results will appear shortly.', 'success');
+                // Poll for completion every 10 seconds
+                const pollId = setInterval(async () => {
+                    try {
+                        const configResp = await fetch(API_CONFIG);
+                        const configData = await configResp.json();
+                        if (!configData.scraper_running) {
+                            clearInterval(pollId);
+                            btn.classList.remove('running');
+                            btn.disabled = false;
+                            span.textContent = 'Run Job Scraper';
+                            fetchDiscoveredJobs();
+                            showToast('Job scraper finished! Check discovered jobs.', 'success');
+                        }
+                    } catch (e) {
+                        clearInterval(pollId);
+                        btn.classList.remove('running');
+                        btn.disabled = false;
+                        span.textContent = 'Run Job Scraper';
+                    }
+                }, 10000);
+            } catch (err) {
+                showToast('Scraper Error: ' + err.message, 'error');
+                btn.classList.remove('running');
+                btn.disabled = false;
+                span.textContent = 'Run Job Scraper';
+            }
+        }
+
+        // --- Settings / Config Logic ------------------------------------------
+        async function fetchConfig() {
+            try {
+                const response = await fetch(API_CONFIG);
+                if (!response.ok) return;
+                const config = await response.json();
+                document.getElementById('cfgLocation').value = config.target_location || '';
+                document.getElementById('cfgExperience').value = config.experience_level || 'Mid-Senior';
+                document.getElementById('cfgKeywords').value = config.search_keywords || '';
+                document.getElementById('cfgResume').value = config.resume_file_path || '';
+                document.getElementById('cfgContext').value = config.context_file_path || '';
+
+                // Populate profile fields
+                const profile = config.profile || {};
+                document.getElementById('cfgProfileFullName').value = profile.full_name || '';
+                document.getElementById('cfgProfileEmail').value = profile.email || '';
+                document.getElementById('cfgProfilePhone').value = profile.phone || '';
+                document.getElementById('cfgProfileCompany').value = profile.current_company || '';
+                document.getElementById('cfgProfileLinkedIn').value = profile.linkedin || '';
+                document.getElementById('cfgProfileGitHub').value = profile.github || '';
+                document.getElementById('cfgProfilePortfolio').value = profile.portfolio || '';
+                document.getElementById('cfgProfileExperience').value = profile.experience_years || '';
+
+                // Set checkboxes
+                const sources = config.enabled_sources || [];
+                document.querySelectorAll('.src-check').forEach(cb => {
+                    cb.checked = sources.includes(cb.value);
+                });
+
+                // Update scraper button state
+                if (config.scraper_running) {
+                    const btn = document.getElementById('scraperBtn');
+                    btn.classList.add('running');
+                    btn.disabled = true;
+                    btn.querySelector('span').textContent = 'Scraper Running...';
+                }
+            } catch (err) {
+                console.error('Config fetch error:', err);
+            }
+        }
+
+        async function saveConfig(event) {
+            event.preventDefault();
+            const enabledSources = [];
+            document.querySelectorAll('.src-check:checked').forEach(cb => {
+                enabledSources.push(cb.value);
+            });
+
+            const config = {
+                target_location: document.getElementById('cfgLocation').value,
+                experience_level: document.getElementById('cfgExperience').value,
+                search_keywords: document.getElementById('cfgKeywords').value,
+                resume_file_path: document.getElementById('cfgResume').value,
+                context_file_path: document.getElementById('cfgContext').value,
+                enabled_sources: enabledSources,
+                profile: {
+                    full_name: document.getElementById('cfgProfileFullName').value,
+                    email: document.getElementById('cfgProfileEmail').value,
+                    phone: document.getElementById('cfgProfilePhone').value,
+                    current_company: document.getElementById('cfgProfileCompany').value,
+                    linkedin: document.getElementById('cfgProfileLinkedIn').value,
+                    github: document.getElementById('cfgProfileGitHub').value,
+                    portfolio: document.getElementById('cfgProfilePortfolio').value,
+                    experience_years: document.getElementById('cfgProfileExperience').value
+                }
+            };
+
+            try {
+                const response = await fetch(API_CONFIG, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                if (!response.ok) throw new Error('Save failed');
+                showToast('Configuration saved successfully!', 'success');
+            } catch (err) {
+                showToast('Failed to save config: ' + err.message, 'error');
+            }
+        }
+
+        // --- Resume Parser Drag & Drop UI Handlers ---
+        const dropZone = document.getElementById('resumeDropZone');
+        const fileInput = document.getElementById('resumeFileInput');
+        const parseLoader = document.getElementById('resumeParseLoader');
+
+        if (dropZone && fileInput) {
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = 'var(--accent-primary)';
+                dropZone.style.background = 'rgba(255, 255, 255, 0.05)';
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                dropZone.style.background = 'rgba(255, 255, 255, 0.02)';
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                dropZone.style.background = 'rgba(255, 255, 255, 0.02)';
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleResumeUpload(files[0]);
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const files = e.target.files;
+                if (files.length > 0) {
+                    handleResumeUpload(files[0]);
+                }
+            });
+        }
+
+        async function handleResumeUpload(file) {
+            if (!file) return;
+            
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (!['pdf', 'txt', 'tex', 'md'].includes(ext)) {
+                showToast('Invalid file format. Please upload PDF, TXT, TeX, or MD files.', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            parseLoader.style.display = 'flex';
+
+            try {
+                const response = await fetch('/api/config/parse-resume', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(errText || 'Parsing failed');
+                }
+
+                const result = await response.json();
+                if (result.success && result.profile) {
+                    const profile = result.profile;
+                    
+                    if (profile.full_name) document.getElementById('cfgProfileFullName').value = profile.full_name;
+                    if (profile.email) document.getElementById('cfgProfileEmail').value = profile.email;
+                    if (profile.phone) document.getElementById('cfgProfilePhone').value = profile.phone;
+                    if (profile.current_company) document.getElementById('cfgProfileCompany').value = profile.current_company;
+                    if (profile.linkedin) document.getElementById('cfgProfileLinkedIn').value = profile.linkedin;
+                    if (profile.github) document.getElementById('cfgProfileGitHub').value = profile.github;
+                    if (profile.portfolio) document.getElementById('cfgProfilePortfolio').value = profile.portfolio;
+                    if (profile.experience_years) document.getElementById('cfgProfileExperience').value = profile.experience_years;
+                    
+                    showToast('Resume parsed successfully! Please review and save your settings.', 'success');
+                } else {
+                    throw new Error(result.error || 'Failed to extract text details.');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Error parsing resume: ' + err.message, 'error');
+            } finally {
+                parseLoader.style.display = 'none';
+                fileInput.value = '';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+# Virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Secrets
+.env
+
+# Debug output
+debug/
+
+# Vendored dependency (optional — uncomment if you want to track it)
+# Scrapling/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Resume backups (auto-generated)
+.resume_backups/
+
+# IDE
+.vscode/
+.idea/
+
+# User Resumes & Private Context
+Resume.pdf
+Resume.tex
+*Career Context File*
+
+# Tracking Data & Excel lists
+Consultancies.xlsx
+data/
+server.log
+
