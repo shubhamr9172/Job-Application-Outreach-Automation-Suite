@@ -21,7 +21,7 @@ if sys.platform == "win32":
         pass
 
 # --- Constants & Paths --------------------------------------------------------
-BASE_DIR = Path(__file__).parent.resolve()
+BASE_DIR = Path(__file__).parent.parent.parent.resolve()
 DATA_DIR = BASE_DIR / "data"
 ENV_FILE = BASE_DIR / ".env"
 

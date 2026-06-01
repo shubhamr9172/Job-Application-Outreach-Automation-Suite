@@ -35,30 +35,51 @@ The project follows a clean, modular folder hierarchy:
 │   ├── resume_audit.log     # Logs for the Resume Auditor Agent
 │   └── resume_fix.log       # Logs for the Resume Fixer Agent
 │
-├── chrome_extension/        # Manifest V3 extension logic and content script
-│   ├── manifest.json        # Extension config
-│   ├── content.js           # DOM manipulation and field matching
-│   └── popup.html / popup.js # User interface for autofilling
-│
 ├── dashboard_public/        # Static frontend dashboard assets
 │   └── index.html           # Single-page web dashboard (HTML, CSS, JS, Observability panel)
 │
-├── docs/                    # Architecture documents and gap analysis reports
+├── docs/                    # Architecture documents and reports
+│   └── assets/              # Reorganized screenshot assets for docs
+│
 ├── scratch/                 # Temporary testing and sandbox files
 ├── venv/                    # Local Python virtual environment
 │
-├── dashboard_server.py      # Core HTTP server (port 8000)
-├── orchestrator.py          # Orchestrates multi-agent job application pipelines
-├── resume_agent.py          # Natural language resume modifier
-├── resume_auditor.py        # Resume Auditor Agent
-├── resume_fixer.py          # Resume Fixer Agent
-├── job_scraper.py           # Stealth job crawler
-├── agency_scraper.py        # Consultancy discovery scraper
-├── job_agent.py             # Cold email outreach agent
-├── mock_interview_agent.py  # Conversational mock technical interviewer
-├── jd_analyzer.py           # Job Description analyzer agent
-├── skill_gap_agent.py       # Technical skill gap roadmap agent
-├── cover_letter_generator.py # Cover letter writer agent
+├── src/                     # Core Python source packages
+│   ├── agents/              # 11 Specialized agent implementations
+│   │   ├── __init__.py
+│   │   ├── cover_letter_generator.py
+│   │   ├── jd_analyzer.py
+│   │   ├── job_agent.py
+│   │   ├── mock_interview_agent.py
+│   │   ├── orchestrator.py
+│   │   ├── resume_agent.py
+│   │   ├── resume_auditor.py
+│   │   ├── resume_fixer.py
+│   │   └── skill_gap_agent.py
+│   │
+│   ├── scrapers/            # Web scraper agents
+│   │   ├── __init__.py
+│   │   ├── agency_scraper.py
+│   │   └── job_scraper.py
+│   │
+│   ├── server/              # Web dashboard server implementation
+│   │   ├── __init__.py
+│   │   └── server.py
+│   │
+│   └── __init__.py          # Marks src as a package
+│
+├── dashboard_server.py      # Root-level backward-compatible wrapper scripts
+├── orchestrator.py
+├── resume_agent.py
+├── resume_auditor.py
+├── resume_fixer.py
+├── job_scraper.py
+├── agency_scraper.py
+├── job_agent.py
+├── mock_interview_agent.py
+├── jd_analyzer.py
+├── cover_letter_generator.py
+├── skill_gap_agent.py
 └── requirements.txt         # Python libraries
 ```
 
@@ -140,7 +161,7 @@ graph TD
 The JSON databases in `data/` are defined below:
 
 ### `data/user_config.json`
-Stores the active resume target, career context paths, locations, and profile details used by the Chrome Extension and crawler scripts.
+Stores the active resume target, career context paths, locations, and profile details used by the crawler scripts.
 ```json
 {
   "target_location": "India",
@@ -266,7 +287,6 @@ The backend HTTP server runs on `http://localhost:8000` via `dashboard_server.py
 - **`/api/jobs/discovered/approve`**: Approves a discovered job, migrating it to `jobs_tracker.json`.
 - **`/api/jobs/discovered/reject`**: Rejects a discovered job posting.
 - **`/api/jobs/scrape`**: Spawns `job_scraper.py` in the background.
-- **`/api/jobs/external-add`**: Adds a job posting directly (called by the Autofill Chrome Extension).
 - **`/api/jobs/analyze`**: Runs `orchestrator.py` sequentially for a job posting.
 - **`/api/jobs/save-cl`**: Saves manual text edits to a job's Cover Letter.
 - **`/api/jobs/mock-interview`**: Simulates conversational turn-based mock interview chat.

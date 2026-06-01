@@ -6,7 +6,7 @@ This document acts as a comprehensive reference guide for the **Job Application 
 
 ## 🚀 Project Overview
 
-The **Job Application & Outreach Automation Suite** is a self-hosted, multi-agent automation platform designed to streamline the end-to-end job application and recruiter outreach lifecycle. By coordinating **11 specialized AI agents** through a stateful central orchestrator, the suite automates job discovery, suitability scoring, skill gap analysis, personalized cover letter generation, automated recruiter outreach via Gmail SMTP/IMAP, and turn-based mock technical interviews. It features a modern Single-Page Web Dashboard for local observability and a Manifest V3 Chrome Extension for browser-level autofilling and tracking.
+The **Job Application & Outreach Automation Suite** is a self-hosted, multi-agent automation platform designed to streamline the end-to-end job application and recruiter outreach lifecycle. By coordinating **11 specialized AI agents** through a stateful central orchestrator, the suite automates job discovery, suitability scoring, skill gap analysis, personalized cover letter generation, automated recruiter outreach via Gmail SMTP/IMAP, and turn-based mock technical interviews. It features a modern Single-Page Web Dashboard for local observability and status tracking.
 
 ---
 
@@ -20,7 +20,6 @@ The **Job Application & Outreach Automation Suite** is a self-hosted, multi-agen
 | **Web Scraping Engine** | `scrapling` (Modern, stealth-focused parser) | High-performance HTML parsing and stealth crawling of ATS platforms (Greenhouse, Lever, Workable). |
 | **Data & Integrations** | Gmail API (SMTP & IMAP), `pandas`, `openpyxl`, `pypdf` | Automated recruiter cold emailing, reply inbox polling/correlation, PDF resume parsing, and Excel/JSON synchronization. |
 | **Frontend Dashboard** | HTML5, Vanilla CSS3 (Dark-mode theme, Glassmorphic UI), JavaScript (ES6) | Single-Page Application (SPA) showcasing agent metrics, execution log streams, and interactive mock interview terminal. |
-| **Browser Integration** | Manifest V3 Chrome Extension (JS Content Scripts) | DOM injection, input auto-matching, and direct metadata sync to the local web server. |
 | **Data Storage** | Structured JSON Databases (`jobs_tracker.json`, `emailed_status.json`, etc.) | Flat-file document storage for active jobs, configs, metrics, and agency tracking. |
 
 ---
@@ -90,11 +89,10 @@ graph TD
 Select and customize these bullet points to add directly to your resumes:
 
 ### Option A: For your AI / GenAI Resume (Focus on LLMs, Graphs, & State Machines)
-> **AI Application & Outreach Automation Suite | Python, LangGraph, Gemini API, Chrome Extension**
+> **AI Application & Outreach Automation Suite | Python, LangGraph, Gemini API**
 > - Architected a multi-agent automation suite orchestrating **11 specialized LLM agents** with a **7-node LangGraph state machine** to automate job discovery, JD scoring, and recruiter outreach.
 > - Developed a semantic JD analysis and gap analyzer utilizing Gemini API structured outputs, reducing role suitability evaluation times from 15 minutes to **<15 seconds**.
 > - Engineered an automated recruiter outreach pipeline via **Gmail SMTP and IMAP connection matching**, automatically tracking active email replies and mapping domain headers to a local database.
-> - Built a **Manifest V3 Chrome Extension** using JavaScript content scripts to extract live job description metadata and trigger backend agent execution with a single click.
 > - Implemented a self-healing **LaTeX Resume Auditor & Fixer agent** using regex parsing and Gemini to validate compilation syntax and update candidate experience details dynamically.
 
 ---
@@ -105,14 +103,12 @@ Select and customize these bullet points to add directly to your resumes:
 > - Automated cold email outreach campaigns using a custom **Gmail SMTP client with dynamic PDF attachments**, increasing recruitment agency contact scale by **300%**.
 > - Integrated a **Gmail IMAP email polling service** to check inbox headers, using domain correlation algorithms to automatically capture recruiter responses and update tracking logs.
 > - Integrated Excel spreadsheets (`pandas`/`openpyxl`) with local JSON databases, maintaining synchronization across files while avoiding process locking during bulk runs.
-> - Created a Manifest V3 browser content parser to auto-fill job fields, eliminating manual entry errors and streamlining status logs capture.
 
 ---
 
 ### Option C: Balanced Full-Stack Developer Version
-> **Job Application & Outreach Automation Suite | Python, JS, Chrome Extension, HTML/CSS**
+> **Job Application & Outreach Automation Suite | Python, JS, HTML/CSS**
 > - Designed and built a local Single-Page web application server using Python, HTML, and Vanilla CSS with a glassmorphic dashboard showcasing real-time agent metrics and execution logs.
-> - Created a browser-level helper (Manifest V3 Chrome Extension) allowing direct application metadata scraping and seamless integration with a local API service.
 > - Leveraged Gemini API and LangGraph to build stateful AI tools, including an interactive mock technical screening terminal and an automated skill-gap learning roadmap generator.
 > - Set up a robust data pipeline utilizing `pandas` and JSON to parse, validate, and write recruitment database updates without data collisions or locks.
 
@@ -124,7 +120,7 @@ Select and customize these bullet points to add directly to your resumes:
 *"I found that manual job searching was highly inefficient. Finding roles, tailoring my resume, checking recruiter details, drafting cover letters, and remembering who I emailed took hours of administrative work. I wanted to build an automated, intelligent workspace that could act as a personalized job search assistant."*
 
 ### 2. The Solution:
-*"I built a modular Python application consisting of 11 AI agents. I used LangGraph for stateful workflows, such as turn-based mock interviews. I created a custom web server for dashboard control, and wrote a Chrome Extension to interact directly with ATS systems in the browser. I also integrated Gmail SMTP and IMAP to run outreach campaigns and automatically flag recruiter replies."*
+*"I built a modular Python application consisting of 11 AI agents. I used LangGraph for stateful workflows, such as turn-based mock interviews, and created a custom web server for dashboard control. I also integrated Gmail SMTP and IMAP to run outreach campaigns and automatically flag recruiter replies."*
 
 ### 3. The Technical Depth:
 *"Instead of just calling a simple API wrapper, I designed a structured database schema using JSON, integrated with Excel, and handled things like domain matching for email correlation. I also handled LaTeX file compilation programmatically, writing an auditor agent that verifies compiler tokens and escapes math symbols before regenerating the PDF."*

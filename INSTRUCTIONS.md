@@ -77,26 +77,7 @@ Follow this guide to get the Job Application & Outreach Automation Suite up and 
 
 ---
 
-## 🔌 Step 5: Install the Chrome Extension
-
-1. Open **Google Chrome** and navigate to: `chrome://extensions/`
-2. Turn on **Developer mode** (toggle in the top-right corner).
-3. Click **Load unpacked** (button in the top-left corner).
-4. Select the `chrome_extension` folder inside this project directory.
-5. The extension icon will now appear in your browser toolbar (pin it for quick access!).
-
----
-
-## ⚡ Step 6: Autofilling Job Forms
-
-1. Go to any job application page (e.g. Lever, Greenhouse, Workable, or custom job boards).
-2. Click the **Autofill Extension** icon in your toolbar.
-3. Click the **⚡ Auto-fill Application Form** button.
-4. The extension will automatically populate matching fields and highlight the resume upload box in a dashed **green glow** so you can easily drag and drop your resume file.
-
----
-
-## 🔍 Step 7: Scrape & Discover Jobs
+## 🔍 Step 5: Scrape & Discover Jobs
 
 You can run background scrapers to find active jobs matching your settings:
 * **To crawl job postings**:
