@@ -352,7 +352,6 @@
             transition: var(--transition-smooth);
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             position: relative;
         }
 
@@ -485,6 +484,7 @@
         .card-actions {
             display: flex;
             gap: 0.5rem;
+            margin-top: auto;
         }
 
         .card-btn {
@@ -934,6 +934,8 @@
             transition: var(--transition-smooth);
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .discovered-card::before {
@@ -997,6 +999,7 @@
         .discovered-actions {
             display: flex;
             gap: 0.5rem;
+            margin-top: auto;
         }
 
         .btn-approve {
@@ -1125,6 +1128,8 @@
             transition: var(--transition-smooth);
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
         .job-card::before {
             content: '';
@@ -1189,6 +1194,7 @@
         .job-card .job-actions {
             display: flex;
             gap: 0.5rem;
+            margin-top: auto;
         }
         .job-card .job-actions .btn-approve,
         .job-card .job-actions .btn-reject {
@@ -1274,6 +1280,7 @@
             display: flex;
             gap: 0.5rem;
             flex-wrap: wrap;
+            margin-top: auto;
         }
         .tracked-job-card .tj-actions button {
             background: rgba(255, 255, 255, 0.03);
@@ -1425,6 +1432,1016 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* --- AI Drawer Styles ---------------------------------------------- */
+        .ai-drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .ai-drawer-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+        .ai-drawer-container {
+            position: fixed;
+            top: 0;
+            right: -600px;
+            width: 600px;
+            height: 100%;
+            background: #0b0a14;
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            z-index: 1001;
+        }
+        .ai-drawer-overlay.active .ai-drawer-container {
+            right: 0;
+        }
+        .ai-drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .ai-drawer-title-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .ai-drawer-title {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .ai-sparkle {
+            font-size: 1.3rem;
+            animation: pulse-glow-text 2s infinite alternate;
+        }
+        .ai-drawer-close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem;
+            color: var(--text-secondary);
+            transition: var(--transition-smooth);
+        }
+        .ai-drawer-close-btn:hover {
+            color: var(--text-primary);
+            transform: scale(1.1);
+        }
+        .ai-drawer-close-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+        .ai-drawer-sub-meta {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+            margin-bottom: 1.25rem;
+            font-weight: 500;
+        }
+        .ai-company-label {
+            color: var(--accent-secondary);
+            font-weight: 600;
+        }
+        .ai-role-label {
+            color: var(--text-secondary);
+        }
+        .ai-drawer-tabs {
+            display: flex;
+            gap: 0.25rem;
+            border-bottom: 1px solid var(--panel-border);
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.5rem;
+        }
+        .ai-tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+        .ai-tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .ai-tab-btn.active {
+            color: var(--text-primary);
+            background: linear-gradient(135deg, var(--accent-primary-glow) 0%, rgba(99, 102, 241, 0.03) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            box-shadow: 0 0 12px rgba(99, 102, 241, 0.1);
+        }
+        .ai-drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            padding-right: 4px;
+        }
+        .ai-panel-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .ai-drawer-loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            gap: 1rem;
+            padding: 2rem;
+            text-align: center;
+        }
+        .ai-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.05);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .ai-empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 1rem;
+            padding: 1.5rem 0.5rem;
+            flex: 1;
+            justify-content: center;
+        }
+        .ai-pulse-circle {
+            font-size: 2.5rem;
+            width: 70px;
+            height: 70px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 2px solid rgba(99, 102, 241, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse-glow-box 2s infinite alternate;
+        }
+        .ai-match-overview-row {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.25rem;
+        }
+        .ai-dial-container {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .ai-dial {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+        .ai-dial-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.05);
+            stroke-width: 8;
+        }
+        .ai-dial-fill {
+            fill: none;
+            stroke: var(--accent-secondary);
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease-in-out;
+        }
+        .ai-dial-text {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .ai-score-num {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .ai-score-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .ai-stack-overview {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .ai-stack-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .ai-stack-title {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+        .ai-stack-value {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .ai-section-title {
+            font-family: var(--font-display);
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .ai-pills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            margin-bottom: 1rem;
+        }
+        .ai-pill-tag {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--panel-border);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .ai-pill-tag.matching {
+            border-color: rgba(20, 184, 166, 0.3);
+            background: rgba(20, 184, 166, 0.04);
+            color: #2dd4bf;
+        }
+        .ai-pill-tag.missing {
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.04);
+            color: #f87171;
+        }
+        .ai-suggestions-list {
+            list-style-type: none;
+            padding-left: 0;
+            margin-bottom: 1rem;
+        }
+        .ai-suggestion-item {
+            position: relative;
+            padding-left: 1.25rem;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            margin-bottom: 0.4rem;
+        }
+        .ai-suggestion-item::before {
+            content: "•";
+            position: absolute;
+            left: 0.25rem;
+            color: var(--accent-primary);
+            font-weight: bold;
+        }
+        .ai-roadmap-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .ai-roadmap-ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-bottom: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .ai-roadmap-li {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 0.6rem 0.8rem;
+            transition: var(--transition-smooth);
+        }
+        .ai-roadmap-li:hover {
+            border-color: var(--panel-border-hover);
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .ai-roadmap-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            cursor: pointer;
+            width: 100%;
+        }
+        .ai-roadmap-checkbox {
+            margin-top: 0.2rem;
+            accent-color: var(--accent-primary);
+            cursor: pointer;
+            width: 15px;
+            height: 15px;
+        }
+        .ai-roadmap-text {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            transition: var(--transition-smooth);
+        }
+        .ai-roadmap-text strong {
+            color: var(--text-primary);
+        }
+        .ai-roadmap-li input[type="checkbox"]:checked + .ai-roadmap-text {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+        .ai-link {
+            color: var(--accent-secondary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .ai-link:hover {
+            text-decoration: underline;
+        }
+        .ai-interview-intro {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .chat-viewport {
+            flex: 1;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            min-height: 250px;
+            margin-bottom: 0.75rem;
+        }
+        .chat-bubble {
+            max-width: 85%;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+        .chat-bubble.interviewer {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--panel-border);
+            color: var(--text-primary);
+            border-top-left-radius: 2px;
+        }
+        .chat-bubble.candidate {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, rgba(99, 102, 241, 0.7) 100%);
+            color: white;
+            border-top-right-radius: 2px;
+        }
+        .chat-bubble.system {
+            align-self: center;
+            background: rgba(20, 184, 166, 0.08);
+            border: 1px solid rgba(20, 184, 166, 0.2);
+            color: var(--accent-secondary);
+            max-width: 90%;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 0.78rem;
+        }
+        .chat-input-area {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .chat-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--panel-border);
+            color: var(--text-primary);
+            border-radius: 8px;
+            padding: 0.6rem 0.8rem;
+            font-size: 0.85rem;
+            resize: none;
+            height: 38px;
+            line-height: 1.2;
+            transition: var(--transition-smooth);
+        }
+        .chat-input:focus {
+            border-color: var(--accent-primary);
+            background: rgba(0, 0, 0, 0.3);
+            outline: none;
+        }
+        .chat-send-btn {
+            background: var(--accent-primary);
+            border: none;
+            color: white;
+            border-radius: 8px;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+        .chat-send-btn:hover {
+            transform: scale(1.05);
+            background: #4f46e5;
+        }
+        .score-badge {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+        }
+        .score-badge.score-green {
+            background: rgba(20, 184, 166, 0.12);
+            border: 1px solid rgba(20, 184, 166, 0.3);
+            color: #2dd4bf;
+        }
+        .score-badge.score-yellow {
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #fbbf24;
+        }
+        .score-badge.score-red {
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #f87171;
+        }
+        .ai-action-btn {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(20, 184, 166, 0.05) 100%) !important;
+            border: 1px solid rgba(99, 102, 241, 0.3) !important;
+            color: var(--text-primary) !important;
+        }
+        .ai-action-btn:hover {
+            border-color: var(--accent-secondary) !important;
+            box-shadow: 0 0 8px rgba(20, 184, 166, 0.3) !important;
+        }
+
+        @keyframes pulse-glow-text {
+            from {
+                text-shadow: 0 0 5px rgba(99, 102, 241, 0.2);
+            }
+            to {
+                text-shadow: 0 0 15px rgba(99, 102, 241, 0.6);
+            }
+        }
+        @keyframes pulse-glow-box {
+            from {
+                box-shadow: 0 0 5px rgba(99, 102, 241, 0.1);
+            }
+            to {
+                box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            }
+        }
+
+        /* --- Agent Observability Styles ------------------------------------- */
+        .obs-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        @media (min-width: 1200px) {
+            .obs-grid {
+                grid-template-columns: 3fr 2fr;
+            }
+        }
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin-top: 1rem;
+        }
+        .agent-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 1.25rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: var(--transition-smooth);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+        .agent-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: transparent;
+            transition: var(--transition-smooth);
+        }
+        .agent-card:hover {
+            border-color: var(--panel-border-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+        }
+        .agent-card:hover::before {
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+        }
+        .agent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+        .agent-title {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .agent-status-badge {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .status-idle {
+            background: rgba(100, 116, 139, 0.1);
+            color: var(--text-secondary);
+            border: 1px solid rgba(100, 116, 139, 0.2);
+        }
+        .status-running {
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            animation: pulse-glow-text 1.5s ease-in-out infinite alternate;
+        }
+        .status-running::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #60a5fa;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        .status-success {
+            background: rgba(34, 197, 94, 0.1);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        .status-failure {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .agent-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            margin-bottom: 1.25rem;
+            flex-grow: 1;
+        }
+        .agent-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.75rem;
+            border: 1px solid rgba(255,255,255,0.02);
+        }
+        .agent-stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .agent-stat-label {
+            color: var(--text-muted);
+            margin-bottom: 0.15rem;
+        }
+        .agent-stat-val {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .agent-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .agent-btn {
+            flex: 1;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--panel-border);
+            color: var(--text-primary);
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+        }
+        .agent-btn:hover:not(:disabled) {
+            background: var(--accent-primary-glow);
+            border-color: var(--accent-primary);
+        }
+        .agent-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* --- Log Console Panel ---------------------------------------------- */
+        .console-panel {
+            background: #04040a;
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        }
+        .console-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid var(--panel-border);
+        }
+        .console-header h2 {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .console-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .console-select {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--panel-border);
+            color: var(--text-primary);
+            padding: 0.4rem 0.75rem;
+            border-radius: 8px;
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            outline: none;
+            cursor: pointer;
+        }
+        .console-select:focus {
+            border-color: var(--accent-primary);
+        }
+        .console-body {
+            flex: 1;
+            padding: 1.25rem;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #38bdf8; /* sky-400 */
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .console-body::-webkit-scrollbar-thumb {
+            background: rgba(56, 189, 248, 0.2);
+        }
+        .console-body::-webkit-scrollbar-thumb:hover {
+            background: rgba(56, 189, 248, 0.4);
+        }
+        
+        /* --- Resume Integrity Center ----------------------------------------- */
+        .integrity-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            margin-bottom: 2rem;
+        }
+        .integrity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 1rem;
+        }
+        .integrity-header h2 {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .score-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 4px solid var(--accent-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            box-shadow: 0 0 15px var(--accent-secondary-glow);
+        }
+        .score-circle.low {
+            border-color: #ef4444;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+        }
+        .score-circle.medium {
+            border-color: #f59e0b;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+        }
+        .audit-results-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        @media (min-width: 992px) {
+            .audit-results-grid {
+                grid-template-columns: 1fr 1.2fr;
+            }
+        }
+        .issues-card {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            height: 400px;
+        }
+        .issues-card h3 {
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 0.5rem;
+        }
+        .issues-list {
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 0.5rem;
+        }
+        .issue-item {
+            padding: 0.75rem;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.01);
+            border: 1px solid rgba(255,255,255,0.04);
+            margin-bottom: 0.75rem;
+            transition: var(--transition-smooth);
+        }
+        .issue-item:hover {
+            border-color: var(--panel-border-hover);
+            background: rgba(255,255,255,0.03);
+        }
+        .issue-item.error {
+            border-left: 3px solid #ef4444;
+        }
+        .issue-item.warning {
+            border-left: 3px solid #f59e0b;
+        }
+        .issue-item.suggestion {
+            border-left: 3px solid #3b82f6;
+        }
+        .issue-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .issue-severity {
+            font-size: 0.7rem;
+            padding: 0.05rem 0.35rem;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .severity-error { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+        .severity-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+        .severity-suggestion { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .issue-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.35;
+        }
+        .issue-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-muted);
+            height: 100%;
+        }
+        .issue-empty svg {
+            width: 48px;
+            height: 48px;
+            fill: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+        .diff-card {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            height: 400px;
+        }
+        .diff-card h3 {
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .diff-container {
+            flex: 1;
+            overflow-y: auto;
+            background: #030307;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+        }
+        .diff-line-added { color: #4ade80; background: rgba(34, 197, 94, 0.05); }
+        .diff-line-removed { color: #f87171; background: rgba(239, 68, 68, 0.05); }
+        .diff-line-header { color: #c084fc; font-weight: bold; }
+        
+        /* --- Pipeline Visualizer --------------------------------------------- */
+        .pipeline-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            margin-bottom: 2rem;
+        }
+        .pipeline-panel h2 {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .pipeline-wrapper {
+            position: relative;
+            width: 100%;
+            height: 140px;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.02);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 1.5rem;
+        }
+        .pipeline-node {
+            position: relative;
+            z-index: 2;
+            background: rgba(15, 12, 30, 0.95);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: var(--transition-smooth);
+            width: 140px;
+        }
+        .pipeline-node.active {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 15px var(--accent-primary-glow);
+            transform: scale(1.05);
+        }
+        .pipeline-node.success {
+            border-color: var(--status-sent);
+            box-shadow: 0 0 15px var(--status-sent-glow);
+        }
+        .pipeline-node.failure {
+            border-color: #ef4444;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.25);
+        }
+        .pipeline-node-icon {
+            font-size: 1.25rem;
+        }
+        .pipeline-node-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .pipeline-node-status {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+        
+        .flow-line {
+            flex: 1 1 0%;
+            min-width: 0;
+            height: 4px;
+            margin: 0 0.5rem;
+            overflow: visible;
+        }
+        .flow-line line {
+            stroke: var(--panel-border);
+            stroke-width: 2;
+            stroke-dasharray: 6 4;
+            transition: var(--transition-smooth);
+        }
+        .flow-line.active line {
+            stroke: var(--accent-primary);
+            animation: dash 1s linear infinite;
+        }
+        .flow-line.success line {
+            stroke: var(--status-sent);
+        }
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -10;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1473,6 +2490,7 @@
             <button class="tab-btn active" onclick="switchTab('outreach', this)">Outreach Tracker</button>
             <button class="tab-btn" onclick="switchTab('discovered', this)">Discovered Agencies <span id="discoveredBadge" class="tab-badge" style="display:none;">0</span></button>
             <button class="tab-btn" onclick="switchTab('jobs', this)">Job Listings <span id="jobsBadge" class="tab-badge" style="display:none;">0</span></button>
+            <button class="tab-btn" onclick="switchTab('observability', this)">📊 Observability</button>
             <button class="tab-btn" onclick="switchTab('settings', this)">⚙ Settings</button>
         </div>
 
@@ -1739,6 +2757,132 @@
             </div>
         </div>
 
+        <!-- TAB 5: Observability Control Room -->
+        <div id="tab-observability" class="tab-content">
+            <!-- Pipeline Visualizer -->
+            <div class="pipeline-panel">
+                <h2>⛓ Multi-Agent Execution Pipeline</h2>
+                <div class="pipeline-wrapper">
+                    <div id="node-scraper" class="pipeline-node">
+                        <span class="pipeline-node-icon">🔍</span>
+                        <span class="pipeline-node-title">Job Scraper</span>
+                        <span id="node-status-scraper" class="pipeline-node-status">Idle</span>
+                    </div>
+                    
+                    <svg id="flow-line-1" class="flow-line" preserveAspectRatio="none">
+                        <line x1="0" y1="2" x2="100%" y2="2" />
+                    </svg>
+                    
+                    <div id="node-orchestrator" class="pipeline-node">
+                        <span class="pipeline-node-icon">🎼</span>
+                        <span class="pipeline-node-title">Orchestrator</span>
+                        <span id="node-status-orchestrator" class="pipeline-node-status">Idle</span>
+                    </div>
+                    
+                    <svg id="flow-line-2" class="flow-line" preserveAspectRatio="none">
+                        <line x1="0" y1="2" x2="100%" y2="2" />
+                    </svg>
+                    
+                    <div id="node-auditor" class="pipeline-node">
+                        <span class="pipeline-node-icon">⚖️</span>
+                        <span class="pipeline-node-title">Resume Auditor</span>
+                        <span id="node-status-auditor" class="pipeline-node-status">Idle</span>
+                    </div>
+                    
+                    <svg id="flow-line-3" class="flow-line" preserveAspectRatio="none">
+                        <line x1="0" y1="2" x2="100%" y2="2" />
+                    </svg>
+                    
+                    <div id="node-fixer" class="pipeline-node">
+                        <span class="pipeline-node-icon">🔧</span>
+                        <span class="pipeline-node-title">Resume Fixer</span>
+                        <span id="node-status-fixer" class="pipeline-node-status">Idle</span>
+                    </div>
+                    
+                    <svg id="flow-line-4" class="flow-line" preserveAspectRatio="none">
+                        <line x1="0" y1="2" x2="100%" y2="2" />
+                    </svg>
+                    
+                    <div id="node-outreach" class="pipeline-node">
+                        <span class="pipeline-node-icon">✉️</span>
+                        <span class="pipeline-node-title">Outreach Agent</span>
+                        <span id="node-status-outreach" class="pipeline-node-status">Idle</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resume Integrity Portal -->
+            <div class="integrity-panel">
+                <div class="integrity-header">
+                    <h2>⚖️ Resume Integrity Center</h2>
+                    <div style="display: flex; align-items: center; gap: 1.5rem;">
+                        <button class="sync-btn" onclick="triggerResumeAudit()" id="btnTriggerAudit">
+                            <span id="btnTriggerAuditText">Trigger Resume Audit</span>
+                        </button>
+                        <button class="sync-btn" onclick="triggerResumeFix()" id="btnTriggerFix" style="background: linear-gradient(135deg, var(--accent-secondary) 0%, var(--accent-primary) 100%);" disabled>
+                            <span id="btnTriggerFixText">Apply Fixes</span>
+                        </button>
+                        <div id="resumeScoreCircle" class="score-circle">-</div>
+                    </div>
+                </div>
+                
+                <div class="audit-results-grid">
+                    <!-- Left: Audit findings list -->
+                    <div class="issues-card">
+                        <h3>Auditor Findings</h3>
+                        <div id="auditIssuesList" class="issues-list">
+                            <div class="issue-empty">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                                </svg>
+                                <p>No issues found. Click 'Trigger Resume Audit' above to scan your active resume.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Diff viewer -->
+                    <div class="diff-card">
+                        <h3>
+                            Proposed LaTeX Changes (Diff)
+                            <button class="agent-btn" onclick="fetchResumeDiff()" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; flex: none;" id="btnRefreshDiff">Refresh Diff</button>
+                        </h3>
+                        <div id="resumeDiffContainer" class="diff-container">(Run an audit first to check proposed corrections)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agent Grid and Log Console Split -->
+            <div class="obs-grid">
+                <!-- Left: 11 Specialized Agents Grid -->
+                <div>
+                    <h2 style="font-family:var(--font-display); font-size:1.4rem; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">🤖 Multi-Agent Hub</h2>
+                    <div id="agentsGridContainer" class="agent-grid">
+                        <!-- Cards will be populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Right: Log Console -->
+                <div>
+                    <div class="console-panel">
+                        <div class="console-header">
+                            <h2>📟 Real-Time Agent Logs</h2>
+                            <div class="console-controls">
+                                <select id="consoleLogSelect" class="console-select" onchange="switchConsoleLog()">
+                                    <option value="job_scraper">Job Scraper</option>
+                                    <option value="resume_auditor">Resume Auditor</option>
+                                    <option value="resume_fixer">Resume Fixer</option>
+                                    <option value="orchestrator">Master Orchestrator</option>
+                                    <option value="job_agent">Outreach Agent</option>
+                                    <option value="agency_scraper">Agency Scraper</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="consoleLogOutput" class="console-body">[System] Loading console... select an agent to view logs.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Edit/Update Details Modal -->
@@ -1778,6 +2922,148 @@
                     <button type="submit" class="btn-primary">Save Changes</button>
                 </div>
             </form>
+    <!-- AI Action Center Drawer -->
+    <div id="aiDrawer" class="ai-drawer-overlay" onclick="closeAIDrawerOnOverlay(event)">
+        <div class="ai-drawer-container" onclick="event.stopPropagation()">
+            <div class="ai-drawer-header">
+                <div class="ai-drawer-title-group">
+                    <span class="ai-sparkle">✨</span>
+                    <h3 class="ai-drawer-title" id="aiDrawerTitle">AI Action Center</h3>
+                </div>
+                <button class="ai-drawer-close-btn" onclick="closeAIDrawer()">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="ai-drawer-sub-meta" id="aiDrawerSubMeta">
+                <span id="aiDrawerCompany" class="ai-company-label"></span> &bull; <span id="aiDrawerRole" class="ai-role-label"></span>
+            </div>
+
+            <!-- Drawer Tabs -->
+            <div class="ai-drawer-tabs" id="aiDrawerTabsHeader">
+                <button class="ai-tab-btn active" onclick="switchAITab('gaps')">Match & Gaps</button>
+                <button class="ai-tab-btn" onclick="switchAITab('cl')">Cover Letter</button>
+                <button class="ai-tab-btn" onclick="switchAITab('roadmap')">Study Roadmap</button>
+                <button class="ai-tab-btn" onclick="switchAITab('interview')">Mock Interview</button>
+            </div>
+
+            <div class="ai-drawer-body">
+                <!-- Loader State -->
+                <div id="aiDrawerLoader" class="ai-drawer-loader" style="display: none;">
+                    <div class="ai-spinner"></div>
+                    <p id="aiLoaderText">Analyzing job description against resume...</p>
+                </div>
+
+                <!-- Not Analyzed (Initial State / Run CTA) -->
+                <div id="aiDrawerNotAnalyzed" class="ai-panel-content" style="display: none;">
+                    <div class="ai-empty-state">
+                        <div class="ai-pulse-circle">🤖</div>
+                        <h4 style="margin-top: 1rem; margin-bottom: 0.5rem; font-family: var(--font-display);">Analyze & Optimize This Position</h4>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem;">Evaluate compatibility with your current resume, check skill gaps, draft a cover letter, build a study plan, and run simulated mock interviews.</p>
+                        
+                        <div class="form-group" style="margin-top: 0.5rem; text-align: left; width: 100%;">
+                            <label for="aiDrawerJdText" style="font-size: 0.85rem; font-weight:600; color:var(--text-secondary); margin-bottom:0.5rem; display:block;">Job Description Text (Optional - Scrapes link if left empty)</label>
+                            <textarea id="aiDrawerJdText" class="form-control" style="min-height: 150px; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--panel-border); font-family: var(--font-sans); color: var(--text-primary); border-radius: 8px; padding: 0.5rem;" placeholder="Paste the job description text here if the scraper gets blocked by the job board..."></textarea>
+                        </div>
+
+                        <button id="aiRunBtn" class="btn-primary" style="margin-top: 1.25rem; width: 100%; display: flex; justify-content: center; align-items: center; gap: 0.5rem; border-radius: 8px; padding: 0.6rem 1.2rem; cursor: pointer; border: none; font-weight:600;" onclick="runAIOptimization()">
+                            <span>🚀 Start AI Optimization</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab 1: Match & Gaps Panel -->
+                <div id="aiPanelGaps" class="ai-panel-content" style="display: none;">
+                    <div class="ai-match-overview-row">
+                        <div class="ai-dial-container">
+                            <svg class="ai-dial" viewBox="0 0 100 100">
+                                <circle class="ai-dial-bg" cx="50" cy="50" r="40" />
+                                <circle id="aiDialFill" class="ai-dial-fill" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2" />
+                            </svg>
+                            <div class="ai-dial-text">
+                                <span id="aiScoreNumber" class="ai-score-num">0%</span>
+                                <span class="ai-score-label">Match</span>
+                            </div>
+                        </div>
+                        <div class="ai-stack-overview">
+                            <div class="ai-stack-item">
+                                <span class="ai-stack-title">Tech Division</span>
+                                <span id="aiRoleDivision" class="ai-stack-value">-</span>
+                            </div>
+                            <div class="ai-stack-item" style="margin-top: 0.5rem;">
+                                <span class="ai-stack-title">Seniority Level</span>
+                                <span id="aiRoleSeniority" class="ai-stack-value">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ai-section-title">Matching Skills</div>
+                    <div id="aiMatchingSkills" class="ai-pills-container">
+                        <!-- Skills Shubham matches -->
+                    </div>
+
+                    <div class="ai-section-title">Missing / Gap Skills</div>
+                    <div id="aiMissingSkills" class="ai-pills-container">
+                        <!-- Missing skills list -->
+                    </div>
+
+                    <div class="ai-section-title">Resume Enhancement Suggestions</div>
+                    <ul id="aiResumeSuggestions" class="ai-suggestions-list">
+                        <!-- Suggestions list -->
+                    </ul>
+                    
+                    <div class="ai-actions-footer" style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--panel-border); display: flex; gap: 0.5rem;">
+                        <button class="btn-secondary" style="flex: 1; border-radius:8px; padding:0.5rem 1rem; cursor:pointer;" onclick="reRunAIOptimization()">🔄 Re-run Analysis</button>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Cover Letter Panel -->
+                <div id="aiPanelCl" class="ai-panel-content" style="display: none;">
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                        Below is a generated cover letter tailored to this role and your resume. Feel free to edit it below, then save or copy the text.
+                    </p>
+                    <div class="form-group" style="flex: 1; display: flex; flex-direction: column;">
+                        <textarea id="aiCoverLetterEditor" class="form-control" style="flex: 1; min-height: 250px; font-family: var(--font-sans); line-height: 1.5; font-size: 0.9rem; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--panel-border); color: var(--text-primary); resize: none; border-radius: 8px; padding: 0.75rem;"></textarea>
+                    </div>
+                    <div class="ai-actions-footer" style="display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--panel-border);">
+                        <button class="btn-secondary" style="flex: 1; border-radius:8px; padding:0.5rem; font-weight:600;" onclick="copyAICoverLetter()">📋 Copy Letter</button>
+                        <button class="btn-primary" style="flex: 1; border-radius:8px; padding:0.5rem; font-weight:600;" onclick="saveAICoverLetter()">💾 Save Draft</button>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Study Roadmap Panel -->
+                <div id="aiPanelRoadmap" class="ai-panel-content" style="display: none;">
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        Custom-generated weekly study plan focusing on filling the missing skill gaps identified for this role.
+                    </p>
+                    <div id="aiRoadmapContainer" class="ai-roadmap-list">
+                        <!-- Week by week checklist -->
+                    </div>
+                </div>
+
+                <!-- Tab 4: Mock Interview Panel -->
+                <div id="aiPanelInterview" class="ai-panel-content" style="display: none;">
+                    <div class="ai-interview-intro">
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+                            Practice technical screening questions tailored to this role. The AI interviewer asks questions, and gives constructive feedback.
+                        </p>
+                        <button class="btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 6px;" onclick="resetMockInterview()">Reset Chat</button>
+                    </div>
+                    <div class="chat-viewport" id="aiInterviewChatViewport">
+                        <!-- Chat history and turn-by-turn simulation -->
+                    </div>
+                    <div class="chat-input-area">
+                        <textarea id="aiInterviewInput" class="chat-input" placeholder="Type your response to the interviewer... (Shift+Enter for newline)"></textarea>
+                        <button class="chat-send-btn" onclick="sendInterviewMessage()">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -2513,13 +3799,26 @@
                 const card = document.createElement('div');
                 card.className = 'tracked-job-card';
                 const statusClass = (job.status || 'pending_apply').trim();
+                
+                // Determine score class color
+                let scoreBadgeHtml = '';
+                if (job.suitability_score !== undefined && job.suitability_score !== null) {
+                    let colorClass = 'red';
+                    if (job.suitability_score >= 75) colorClass = 'green';
+                    else if (job.suitability_score >= 50) colorClass = 'yellow';
+                    scoreBadgeHtml = `<span class="score-badge score-${colorClass}">${job.suitability_score}% Match</span>`;
+                }
+
                 card.innerHTML = `
                     <div class="tj-header">
                         <div>
                             <div class="tj-title">${escapeHtml(job.title || 'Untitled')}</div>
                             <div class="tj-company">${escapeHtml(job.company || '')}</div>
                         </div>
-                        <span class="job-status-tag ${statusClass}">${statusLabels[statusClass] || statusClass}</span>
+                        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.4rem;">
+                            <span class="job-status-tag ${statusClass}">${statusLabels[statusClass] || statusClass}</span>
+                            ${scoreBadgeHtml}
+                        </div>
                     </div>
                     <div class="tj-meta">
                         ${job.location ? `<span>${escapeHtml(job.location)}</span>` : ''}
@@ -2529,6 +3828,7 @@
                     </div>
                     ${job.notes ? `<div class="tj-notes">"${escapeHtml(job.notes)}"</div>` : ''}
                     <div class="tj-actions">
+                        <button class="ai-action-btn" onclick="openAIDrawer('${escapeHtml(job.link).replace(/'/g, "\\'")}')">✨ AI Action Center</button>
                         <button onclick="updateTrackedJobStatus('${escapeHtml(job.link).replace(/'/g, "\\'")}',' applied')">Mark Applied</button>
                         <button onclick="updateTrackedJobStatus('${escapeHtml(job.link).replace(/'/g, "\\'")}',' interviewing')">Interviewing</button>
                         <button onclick="updateTrackedJobStatus('${escapeHtml(job.link).replace(/'/g, "\\'")}',' offer')">Offer 🎉</button>
@@ -2766,6 +4066,957 @@
             } finally {
                 parseLoader.style.display = 'none';
                 fileInput.value = '';
+            }
+        }
+
+        // --- AI Action Center Drawer Controls --------------------------------
+        let activeJobLink = null;
+        let currentAITab = 'gaps';
+
+        const API_JOBS_ANALYZE = '/api/jobs/analyze';
+        const API_JOBS_SAVE_CL = '/api/jobs/save-cl';
+        const API_JOBS_MOCK_INTERVIEW = '/api/jobs/mock-interview';
+
+        function openAIDrawer(link) {
+            activeJobLink = link;
+            const job = trackedJobs.find(j => j.link === link) || discoveredJobs.find(j => j.link === link);
+            if (!job) {
+                showToast('Job entry not found.', 'error');
+                return;
+            }
+
+            // Populate header details
+            document.getElementById('aiDrawerCompany').textContent = job.company || 'Unknown Company';
+            document.getElementById('aiDrawerRole').textContent = job.title || 'Unknown Role';
+
+            // Show drawer
+            const drawer = document.getElementById('aiDrawer');
+            drawer.style.display = 'block';
+            // Force reflow
+            drawer.offsetHeight;
+            drawer.classList.add('active');
+
+            // Reset tab
+            switchAITab('gaps');
+            
+            // Check if analyzed
+            renderAIDrawerContent(job);
+        }
+
+        function closeAIDrawer() {
+            const drawer = document.getElementById('aiDrawer');
+            drawer.classList.remove('active');
+            setTimeout(() => {
+                drawer.style.display = 'none';
+            }, 300);
+            activeJobLink = null;
+        }
+
+        function closeAIDrawerOnOverlay(event) {
+            if (event.target === document.getElementById('aiDrawer')) {
+                closeAIDrawer();
+            }
+        }
+
+        function switchAITab(tabName) {
+            currentAITab = tabName;
+            
+            // Toggle active tabs
+            const tabButtons = document.querySelectorAll('#aiDrawerTabsHeader .ai-tab-btn');
+            tabButtons.forEach(btn => {
+                if (btn.getAttribute('onclick').includes(`'${tabName}'`)) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // If we have an active link, re-render
+            if (activeJobLink) {
+                const job = trackedJobs.find(j => j.link === activeJobLink) || discoveredJobs.find(j => j.link === activeJobLink);
+                if (job) {
+                    renderAIDrawerContent(job);
+                }
+            }
+        }
+
+        function renderAIDrawerContent(job) {
+            const hasBeenAnalyzed = job.suitability_score !== undefined && job.suitability_score !== null;
+
+            // Hide loader and empty state initially
+            document.getElementById('aiDrawerLoader').style.display = 'none';
+            document.getElementById('aiDrawerNotAnalyzed').style.display = 'none';
+
+            // Hide all tab panels
+            document.getElementById('aiPanelGaps').style.display = 'none';
+            document.getElementById('aiPanelCl').style.display = 'none';
+            document.getElementById('aiPanelRoadmap').style.display = 'none';
+            document.getElementById('aiPanelInterview').style.display = 'none';
+
+            if (!hasBeenAnalyzed) {
+                // Show Not Analyzed panel
+                document.getElementById('aiDrawerNotAnalyzed').style.display = 'block';
+                document.getElementById('aiDrawerTabsHeader').style.opacity = '0.5';
+                document.getElementById('aiDrawerTabsHeader').style.pointerEvents = 'none';
+            } else {
+                // Enabled tab headers
+                document.getElementById('aiDrawerTabsHeader').style.opacity = '1';
+                document.getElementById('aiDrawerTabsHeader').style.pointerEvents = 'auto';
+
+                // Render the specific active panel
+                if (currentAITab === 'gaps') {
+                    document.getElementById('aiPanelGaps').style.display = 'flex';
+                    document.getElementById('aiPanelGaps').style.flexDirection = 'column';
+                    
+                    // Render Match Overview Dial
+                    const score = job.suitability_score || 0;
+                    document.getElementById('aiScoreNumber').textContent = score + '%';
+                    const fill = document.getElementById('aiDialFill');
+                    if (fill) {
+                        const offset = 251.2 * (1 - score / 100);
+                        fill.style.strokeDashoffset = offset;
+                    }
+                    
+                    // Division & Seniority
+                    const divVal = (job.key_role_details && job.key_role_details.division) || (job.key_role_details && job.key_role_details.core_tech_stack) || '-';
+                    const senVal = (job.key_role_details && job.key_role_details.seniority) || job.seniority_level || '-';
+                    document.getElementById('aiRoleDivision').textContent = divVal;
+                    document.getElementById('aiRoleSeniority').textContent = senVal;
+
+                    // Matching Skills
+                    const matchingSkillsContainer = document.getElementById('aiMatchingSkills');
+                    matchingSkillsContainer.innerHTML = '';
+                    if (job.matching_skills && job.matching_skills.length > 0) {
+                        job.matching_skills.forEach(skill => {
+                            const span = document.createElement('span');
+                            span.className = 'ai-pill ai-pill-match';
+                            span.textContent = skill;
+                            matchingSkillsContainer.appendChild(span);
+                        });
+                    } else {
+                        matchingSkillsContainer.innerHTML = '<span class="ai-empty-pills">No matching skills listed.</span>';
+                    }
+
+                    // Missing Skills
+                    const missingSkillsContainer = document.getElementById('aiMissingSkills');
+                    missingSkillsContainer.innerHTML = '';
+                    if (job.missing_skills && job.missing_skills.length > 0) {
+                        job.missing_skills.forEach(skill => {
+                            const span = document.createElement('span');
+                            span.className = 'ai-pill ai-pill-missing';
+                            span.textContent = skill;
+                            missingSkillsContainer.appendChild(span);
+                        });
+                    } else {
+                        missingSkillsContainer.innerHTML = '<span class="ai-empty-pills">No missing skills detected! 🎉</span>';
+                    }
+
+                    // Resume Suggestions
+                    const suggestionsContainer = document.getElementById('aiResumeSuggestions');
+                    suggestionsContainer.innerHTML = '';
+                    if (job.resume_suggestions && job.resume_suggestions.length > 0) {
+                        job.resume_suggestions.forEach(suggestion => {
+                            const li = document.createElement('li');
+                            li.className = 'ai-suggestion-item';
+                            li.textContent = suggestion;
+                            suggestionsContainer.appendChild(li);
+                        });
+                    } else {
+                        suggestionsContainer.innerHTML = '<li class="ai-suggestion-item">No resume updates suggested.</li>';
+                    }
+                } else if (currentAITab === 'cl') {
+                    document.getElementById('aiPanelCl').style.display = 'flex';
+                    document.getElementById('aiPanelCl').style.flexDirection = 'column';
+                    document.getElementById('aiCoverLetterEditor').value = job.cover_letter || '';
+                } else if (currentAITab === 'roadmap') {
+                    document.getElementById('aiPanelRoadmap').style.display = 'flex';
+                    document.getElementById('aiPanelRoadmap').style.flexDirection = 'column';
+                    const roadmapContainer = document.getElementById('aiRoadmapContainer');
+                    roadmapContainer.innerHTML = renderMarkdown(job.study_plan || 'No study plan generated.');
+                } else if (currentAITab === 'interview') {
+                    document.getElementById('aiPanelInterview').style.display = 'flex';
+                    document.getElementById('aiPanelInterview').style.flexDirection = 'column';
+                    
+                    // Render Chat history
+                    const chatViewport = document.getElementById('aiInterviewChatViewport');
+                    chatViewport.innerHTML = '';
+                    
+                    const history = job.interview_chat_history || [];
+                    if (history.length === 0) {
+                        chatViewport.innerHTML = `
+                            <div class="chat-bubble system">
+                                Start a simulated mock interview with a senior technical interviewer for this role.
+                            </div>
+                            <div class="chat-bubble interviewer">
+                                Hello! Welcome to the mock technical interview for the ${job.title || 'Software Engineer'} role at ${job.company || 'the Company'}. I've reviewed your resume. Whenever you're ready, say hello or answer my first question: Could you give me a brief overview of your background and why you are interested in this position?
+                            </div>
+                        `;
+                    } else {
+                        history.forEach(msg => {
+                            if (msg.text === "Hello. I am ready for my mock interview. Please introduce yourself and start with the first question.") {
+                                return;
+                            }
+                            const bubble = document.createElement('div');
+                            bubble.className = 'chat-bubble ' + (msg.role === 'user' ? 'candidate' : 'interviewer');
+                            bubble.innerHTML = renderMarkdown(msg.text);
+                            chatViewport.appendChild(bubble);
+                        });
+                    }
+                    chatViewport.scrollTop = chatViewport.scrollHeight;
+                }
+            }
+        }
+
+        async function runAIOptimization() {
+            if (!activeJobLink) return;
+
+            const jdText = document.getElementById('aiDrawerJdText').value.trim();
+            const loader = document.getElementById('aiDrawerLoader');
+            const notAnalyzedPanel = document.getElementById('aiDrawerNotAnalyzed');
+            const loaderText = document.getElementById('aiLoaderText');
+
+            notAnalyzedPanel.style.display = 'none';
+            loader.style.display = 'flex';
+            loaderText.textContent = 'Contacting recruitment agents...';
+
+            const steps = [
+                'Analyzing job description requirements...',
+                'Comparing requirements against your Resume.tex...',
+                'Drafting tailored cover letter for this company...',
+                'Mapping out custom weekly learning roadmap...',
+                'Preparing simulated interview panel...'
+            ];
+            let currentStepIdx = 0;
+            const progressInterval = setInterval(() => {
+                if (currentStepIdx < steps.length - 1) {
+                    currentStepIdx++;
+                    loaderText.textContent = steps[currentStepIdx];
+                }
+            }, 4000);
+
+            try {
+                const response = await fetch(API_JOBS_ANALYZE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        link: activeJobLink,
+                        jd_text: jdText || null
+                    })
+                });
+
+                clearInterval(progressInterval);
+
+                if (!response.ok) {
+                    const errResult = await response.json();
+                    throw new Error(errResult.error || 'Server pipeline error');
+                }
+
+                const data = await response.json();
+                if (data.success && data.job) {
+                    showToast('AI analysis completed successfully!', 'success');
+                    
+                    await fetchTrackedJobs();
+                    await fetchDiscoveredJobs();
+
+                    const updatedJob = trackedJobs.find(j => j.link === activeJobLink) || discoveredJobs.find(j => j.link === activeJobLink);
+                    if (updatedJob) {
+                        renderAIDrawerContent(updatedJob);
+                    }
+                } else {
+                    throw new Error(data.error || 'Pipeline execution failed');
+                }
+            } catch (err) {
+                clearInterval(progressInterval);
+                loader.style.display = 'none';
+                notAnalyzedPanel.style.display = 'block';
+                showToast('Optimization failed: ' + err.message, 'error');
+            }
+        }
+
+        function reRunAIOptimization() {
+            if (!confirm('Are you sure you want to clear current analysis and re-run optimization? This will overwrite the current cover letter and study plan.')) {
+                return;
+            }
+            const job = trackedJobs.find(j => j.link === activeJobLink) || discoveredJobs.find(j => j.link === activeJobLink);
+            if (job) {
+                delete job.suitability_score;
+                delete job.matching_skills;
+                delete job.missing_skills;
+                delete job.resume_suggestions;
+                delete job.cover_letter;
+                delete job.study_plan;
+                delete job.interview_chat_history;
+                
+                renderAIDrawerContent(job);
+            }
+        }
+
+        function copyAICoverLetter() {
+            const text = document.getElementById('aiCoverLetterEditor').value;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('Cover letter copied to clipboard!', 'success');
+                }).catch(err => {
+                    showToast('Failed to copy: ' + err, 'error');
+                });
+            } else {
+                const editor = document.getElementById('aiCoverLetterEditor');
+                editor.select();
+                document.execCommand('copy');
+                window.getSelection().removeAllRanges();
+                showToast('Cover letter copied to clipboard!', 'success');
+            }
+        }
+
+        async function saveAICoverLetter() {
+            if (!activeJobLink) return;
+            const text = document.getElementById('aiCoverLetterEditor').value;
+
+            try {
+                const response = await fetch(API_JOBS_SAVE_CL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        link: activeJobLink,
+                        cover_letter: text
+                    })
+                });
+
+                if (!response.ok) throw new Error('Save request failed');
+                const result = await response.json();
+                if (result.success) {
+                    showToast('Cover letter draft saved!', 'success');
+                    const job = trackedJobs.find(j => j.link === activeJobLink) || discoveredJobs.find(j => j.link === activeJobLink);
+                    if (job) {
+                        job.cover_letter = text;
+                    }
+                } else {
+                    throw new Error('Save failed on server');
+                }
+            } catch (err) {
+                showToast('Failed to save cover letter: ' + err.message, 'error');
+            }
+        }
+
+        async function sendInterviewMessage() {
+            if (!activeJobLink) return;
+            const inputEl = document.getElementById('aiInterviewInput');
+            const message = inputEl.value.trim();
+            if (!message) return;
+
+            inputEl.value = '';
+
+            const chatViewport = document.getElementById('aiInterviewChatViewport');
+            const userBubble = document.createElement('div');
+            userBubble.className = 'chat-bubble candidate';
+            userBubble.innerHTML = renderMarkdown(message);
+            chatViewport.appendChild(userBubble);
+            chatViewport.scrollTop = chatViewport.scrollHeight;
+
+            const typingBubble = document.createElement('div');
+            typingBubble.className = 'chat-bubble interviewer';
+            typingBubble.innerHTML = '<span class="ai-typing-indicator">Interviewer is typing...</span>';
+            chatViewport.appendChild(typingBubble);
+            chatViewport.scrollTop = chatViewport.scrollHeight;
+
+            try {
+                const response = await fetch(API_JOBS_MOCK_INTERVIEW, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        link: activeJobLink,
+                        message: message
+                    })
+                });
+
+                if (chatViewport.contains(typingBubble)) {
+                    chatViewport.removeChild(typingBubble);
+                }
+
+                if (!response.ok) throw new Error('Failed to get response');
+                const data = await response.json();
+                if (data.success && data.response) {
+                    const systemBubble = document.createElement('div');
+                    systemBubble.className = 'chat-bubble interviewer';
+                    systemBubble.innerHTML = renderMarkdown(data.response);
+                    chatViewport.appendChild(systemBubble);
+                    chatViewport.scrollTop = chatViewport.scrollHeight;
+
+                    const job = trackedJobs.find(j => j.link === activeJobLink) || discoveredJobs.find(j => j.link === activeJobLink);
+                    if (job) {
+                        job.interview_chat_history = data.history;
+                    }
+                } else {
+                    throw new Error(data.error || 'Unknown response error');
+                }
+            } catch (err) {
+                if (chatViewport.contains(typingBubble)) {
+                    chatViewport.removeChild(typingBubble);
+                }
+                const errorBubble = document.createElement('div');
+                errorBubble.className = 'chat-bubble system';
+                errorBubble.textContent = 'Failed to connect: ' + err.message;
+                chatViewport.appendChild(errorBubble);
+                chatViewport.scrollTop = chatViewport.scrollHeight;
+            }
+        }
+
+        async function resetMockInterview() {
+            if (!activeJobLink) return;
+            if (!confirm('Are you sure you want to reset the mock interview chat? This will clear the chat history.')) {
+                return;
+            }
+
+            const chatViewport = document.getElementById('aiInterviewChatViewport');
+            chatViewport.innerHTML = '<div class="chat-bubble system">Resetting chat history...</div>';
+
+            try {
+                const response = await fetch(API_JOBS_MOCK_INTERVIEW, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        link: activeJobLink,
+                        reset: true
+                    })
+                });
+
+                if (!response.ok) throw new Error('Reset failed');
+                const data = await response.json();
+                if (data.success) {
+                    const job = trackedJobs.find(j => j.link === activeJobLink) || discoveredJobs.find(j => j.link === activeJobLink);
+                    if (job) {
+                        job.interview_chat_history = data.history;
+                    }
+                    
+                    chatViewport.innerHTML = `
+                        <div class="chat-bubble system">
+                            Mock interview reset. Good luck!
+                        </div>
+                        <div class="chat-bubble interviewer">
+                            ${renderMarkdown(data.response)}
+                        </div>
+                    `;
+                    chatViewport.scrollTop = chatViewport.scrollHeight;
+                } else {
+                    throw new Error(data.error || 'Server error during reset');
+                }
+            } catch (err) {
+                chatViewport.innerHTML = '<div class="chat-bubble system">Error resetting chat: ' + err.message + '</div>';
+            }
+        }
+
+        function renderMarkdown(text) {
+            if (!text) return '';
+            
+            let html = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="ai-link" target="_blank">$1</a>');
+
+            const lines = html.split('\n');
+            let result = [];
+            let inList = false;
+
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                
+                if (line.startsWith('### ')) {
+                    if (inList) { result.push('</ul>'); inList = false; }
+                    result.push(`<h4 class="ai-roadmap-h4" style="margin-top:0.75rem; margin-bottom:0.4rem; color:var(--text-primary); font-family:var(--font-display);">${line.substring(4)}</h4>`);
+                } else if (line.startsWith('## ')) {
+                    if (inList) { result.push('</ul>'); inList = false; }
+                    result.push(`<h3 class="ai-roadmap-h3" style="margin-top:1rem; margin-bottom:0.5rem; color:var(--text-primary); font-family:var(--font-display);">${line.substring(3)}</h3>`);
+                } else if (line.startsWith('# ')) {
+                    if (inList) { result.push('</ul>'); inList = false; }
+                    result.push(`<h2 class="ai-roadmap-h2" style="margin-top:1.25rem; margin-bottom:0.75rem; color:var(--accent-secondary); font-family:var(--font-display);">${line.substring(2)}</h2>`);
+                } 
+                else if (line.startsWith('- ') || line.startsWith('* ') || line.startsWith('- [ ] ') || line.startsWith('* [ ] ') || line.startsWith('- [x] ') || line.startsWith('* [x] ')) {
+                    if (!inList) {
+                        result.push('<ul class="ai-roadmap-ul">');
+                        inList = true;
+                    }
+                    
+                    let content = line;
+                    let checked = false;
+                    
+                    if (line.startsWith('- [ ] ') || line.startsWith('* [ ] ')) {
+                        content = line.substring(6);
+                    } else if (line.startsWith('- [x] ') || line.startsWith('* [x] ')) {
+                        content = line.substring(6);
+                        checked = true;
+                    } else {
+                        content = line.substring(2);
+                    }
+                    
+                    result.push(`
+                        <li class="ai-roadmap-li">
+                            <label class="ai-roadmap-label">
+                                <input type="checkbox" class="ai-roadmap-checkbox" ${checked ? 'checked' : ''} onchange="toggleRoadmapItem(this)">
+                                <span class="ai-roadmap-text">${content}</span>
+                            </label>
+                        </li>
+                    `);
+                } else {
+                    if (inList) { result.push('</ul>'); inList = false; }
+                    if (line.length > 0) {
+                        result.push(`<p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.4; margin-bottom:0.5rem;">${line}</p>`);
+                    } else {
+                        result.push('<br/>');
+                    }
+                }
+            }
+
+            if (inList) {
+                result.push('</ul>');
+            }
+
+            return result.join('\n');
+        }
+
+        function toggleRoadmapItem(checkbox) {
+            // Visual check state applies line-through instantly via CSS.
+        }
+
+        // Attach Enter-key event listener to Mock Interview input area once
+        document.addEventListener('DOMContentLoaded', () => {
+            const interviewInput = document.getElementById('aiInterviewInput');
+            if (interviewInput) {
+                interviewInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendInterviewMessage();
+                    }
+                });
+            }
+            
+            // Run initial agents load
+            fetchAgents();
+        });
+
+        // --- Observability Logic ---------------------------------------------
+        let obsInterval = null;
+        let logInterval = null;
+
+        // Override/Extend switchTab to support Observability tab polling
+        const originalSwitchTab = switchTab;
+        switchTab = function(tabName, btnEl) {
+            originalSwitchTab(tabName, btnEl);
+            
+            // Clear any active intervals
+            if (obsInterval) { clearInterval(obsInterval); obsInterval = null; }
+            if (logInterval) { clearInterval(logInterval); logInterval = null; }
+            
+            if (tabName === 'observability') {
+                fetchAgents();
+                fetchResumeAuditResults();
+                fetchResumeDiff();
+                // Poll agents status every 2.5 seconds
+                obsInterval = setInterval(fetchAgents, 2500);
+                // Start log polling
+                startLogPolling();
+            }
+        };
+
+        async function fetchAgents() {
+            try {
+                const response = await fetch('/api/agents');
+                if (!response.ok) throw new Error('Failed to fetch agents data');
+                const agents = await response.json();
+                renderAgents(agents);
+                updatePipelineVisualizer(agents);
+            } catch (err) {
+                console.error('Error fetching agents:', err);
+            }
+        }
+
+        function formatTimestamp(ts) {
+            if (!ts) return 'Never';
+            try {
+                const date = new Date(ts);
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+            } catch (e) {
+                return ts;
+            }
+        }
+
+        function renderAgents(agents) {
+            const container = document.getElementById('agentsGridContainer');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            agents.forEach(agent => {
+                const isRunning = agent.status === 'running';
+                const statusClass = `status-${agent.status}`;
+                const latency = agent.avg_latency_sec ? agent.avg_latency_sec.toFixed(1) + 's' : '-';
+                const lastRun = agent.last_run_timestamp ? formatTimestamp(agent.last_run_timestamp) : 'Never';
+                
+                // Determine action button
+                let actionBtnHtml = '';
+                if (agent.script === 'resume_auditor.py') {
+                    actionBtnHtml = `<button class="agent-btn" onclick="triggerResumeAudit()" ${isRunning ? 'disabled' : ''}>🔍 Audit</button>`;
+                } else if (agent.script === 'resume_fixer.py') {
+                    actionBtnHtml = `<button class="agent-btn" onclick="triggerResumeFix()" ${isRunning ? 'disabled' : ''}>🔧 Apply Fixes</button>`;
+                } else if (agent.script === 'job_scraper.py') {
+                    actionBtnHtml = `<button class="agent-btn" onclick="triggerJobScraper()" ${isRunning ? 'disabled' : ''}>🕵️ Run Scraper</button>`;
+                } else {
+                    actionBtnHtml = `<button class="agent-btn" disabled style="opacity: 0.3;">Auto Agent</button>`;
+                }
+                
+                const card = document.createElement('div');
+                card.className = 'agent-card';
+                card.innerHTML = `
+                    <div>
+                        <div class="agent-header">
+                            <span class="agent-title">${agent.name}</span>
+                            <span class="agent-status-badge ${statusClass}">${agent.status}</span>
+                        </div>
+                        <p class="agent-desc">${agent.description}</p>
+                    </div>
+                    <div>
+                        <div class="agent-stats">
+                            <div class="agent-stat-item">
+                                <span class="agent-stat-label">Runs</span>
+                                <span class="agent-stat-val">${agent.run_count}</span>
+                            </div>
+                            <div class="agent-stat-item">
+                                <span class="agent-stat-label">Avg Latency</span>
+                                <span class="agent-stat-val">${latency}</span>
+                            </div>
+                            <div class="agent-stat-item" style="grid-column: span 2; margin-top: 0.25rem;">
+                                <span class="agent-stat-label">Last Run</span>
+                                <span class="agent-stat-val">${lastRun}</span>
+                            </div>
+                        </div>
+                        <div class="agent-actions">
+                            ${actionBtnHtml}
+                            <button class="agent-btn" onclick="selectAgentLog('${agent.script.replace('.py', '')}')" style="background:rgba(255,255,255,0.01); flex:none; width:40px; padding:0;" title="View Logs">📟</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updatePipelineVisualizer(agents) {
+            // Mapping of agent script name -> pipeline node id
+            const scriptToNode = {
+                'job_scraper.py': 'scraper',
+                'orchestrator.py': 'orchestrator',
+                'resume_auditor.py': 'auditor',
+                'resume_fixer.py': 'fixer',
+                'job_agent.py': 'outreach'
+            };
+            
+            // First reset all nodes to idle
+            Object.values(scriptToNode).forEach(nodeName => {
+                const el = document.getElementById(`node-${nodeName}`);
+                const statusEl = document.getElementById(`node-status-${nodeName}`);
+                if (el) {
+                    el.className = 'pipeline-node';
+                }
+                if (statusEl) {
+                    statusEl.innerText = 'Idle';
+                }
+            });
+            
+            // Also reset flow lines
+            for (let i = 1; i <= 4; i++) {
+                const line = document.getElementById(`flow-line-${i}`);
+                if (line) {
+                    line.classList.remove('active', 'success');
+                }
+            }
+            
+            // Set active states
+            agents.forEach(agent => {
+                const nodeName = scriptToNode[agent.script];
+                if (!nodeName) return;
+                
+                const el = document.getElementById(`node-${nodeName}`);
+                const statusEl = document.getElementById(`node-status-${nodeName}`);
+                
+                if (agent.status === 'running') {
+                    if (el) el.classList.add('active');
+                    if (statusEl) statusEl.innerText = 'Running';
+                } else if (agent.status === 'idle') {
+                    if (agent.last_run_status === 'success') {
+                        if (el) el.classList.add('success');
+                        if (statusEl) statusEl.innerText = 'Success';
+                    } else if (agent.last_run_status === 'failure') {
+                        if (el) el.classList.add('failure');
+                        if (statusEl) statusEl.innerText = 'Failed';
+                    }
+                }
+            });
+            
+            // Animate flow lines based on adjacent nodes
+            // Line 1: scraper -> orchestrator
+            const scraperActive = document.getElementById('node-scraper')?.classList.contains('active');
+            const scraperSuccess = document.getElementById('node-scraper')?.classList.contains('success');
+            const line1 = document.getElementById('flow-line-1');
+            if (line1) {
+                if (scraperActive) line1.classList.add('active');
+                else if (scraperSuccess) line1.classList.add('success');
+            }
+            
+            // Line 2: orchestrator -> auditor
+            const orchActive = document.getElementById('node-orchestrator')?.classList.contains('active');
+            const orchSuccess = document.getElementById('node-orchestrator')?.classList.contains('success');
+            const line2 = document.getElementById('flow-line-2');
+            if (line2) {
+                if (orchActive) line2.classList.add('active');
+                else if (orchSuccess) line2.classList.add('success');
+            }
+            
+            // Line 3: auditor -> fixer
+            const audActive = document.getElementById('node-auditor')?.classList.contains('active');
+            const audSuccess = document.getElementById('node-auditor')?.classList.contains('success');
+            const line3 = document.getElementById('flow-line-3');
+            if (line3) {
+                if (audActive) line3.classList.add('active');
+                else if (audSuccess) line3.classList.add('success');
+            }
+            
+            // Line 4: fixer -> outreach
+            const fixActive = document.getElementById('node-fixer')?.classList.contains('active');
+            const fixSuccess = document.getElementById('node-fixer')?.classList.contains('success');
+            const line4 = document.getElementById('flow-line-4');
+            if (line4) {
+                if (fixActive) line4.classList.add('active');
+                else if (fixSuccess) line4.classList.add('success');
+            }
+        }
+
+        function switchConsoleLog() {
+            fetchCurrentLog();
+        }
+        
+        function selectAgentLog(agentKey) {
+            const selectEl = document.getElementById('consoleLogSelect');
+            if (selectEl) {
+                selectEl.value = agentKey;
+                switchConsoleLog();
+            }
+        }
+        
+        async function fetchCurrentLog() {
+            const selectEl = document.getElementById('consoleLogSelect');
+            if (!selectEl) return;
+            const agent = selectEl.value;
+            const outputEl = document.getElementById('consoleLogOutput');
+            if (!outputEl) return;
+            
+            try {
+                const response = await fetch(`/api/logs?agent=${agent}&lines=100`);
+                if (!response.ok) throw new Error('Failed to fetch log content');
+                const text = await response.text();
+                
+                outputEl.innerText = text;
+                outputEl.scrollTop = outputEl.scrollHeight;
+            } catch (err) {
+                outputEl.innerText = `Error fetching logs: ${err.message}`;
+            }
+        }
+        
+        function startLogPolling() {
+            if (logInterval) clearInterval(logInterval);
+            fetchCurrentLog();
+            logInterval = setInterval(fetchCurrentLog, 2000);
+        }
+
+        async function triggerResumeAudit() {
+            const btn = document.getElementById('btnTriggerAudit');
+            const btnText = document.getElementById('btnTriggerAuditText');
+            
+            try {
+                if (btn) btn.disabled = true;
+                if (btnText) btnText.innerText = 'Auditing...';
+                showToast('Triggering Resume Audit in background...', 'info');
+                
+                const response = await fetch('/api/resume/audit', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Auditor started! Watch logs in the console panel.', 'success');
+                    selectAgentLog('resume_auditor');
+                    
+                    let auditCheckInterval = setInterval(async () => {
+                        const agentsResponse = await fetch('/api/agents');
+                        const agents = await agentsResponse.json();
+                        const auditor = agents.find(a => a.script === 'resume_auditor.py');
+                        
+                        if (auditor && auditor.status !== 'running') {
+                            clearInterval(auditCheckInterval);
+                            if (btn) btn.disabled = false;
+                            if (btnText) btnText.innerText = 'Trigger Resume Audit';
+                            showToast('Auditor finished execution!', 'success');
+                            fetchResumeAuditResults();
+                            fetchResumeDiff();
+                        }
+                    }, 2000);
+                } else {
+                    showToast('Failed to start auditor: ' + data.error, 'error');
+                    if (btn) btn.disabled = false;
+                    if (btnText) btnText.innerText = 'Trigger Resume Audit';
+                }
+            } catch (err) {
+                showToast('Error starting auditor: ' + err.message, 'error');
+                if (btn) btn.disabled = false;
+                if (btnText) btnText.innerText = 'Trigger Resume Audit';
+            }
+        }
+        
+        async function fetchResumeAuditResults() {
+            const issuesContainer = document.getElementById('auditIssuesList');
+            const scoreCircle = document.getElementById('resumeScoreCircle');
+            const btnTriggerFix = document.getElementById('btnTriggerFix');
+            
+            if (!issuesContainer) return;
+            
+            try {
+                const response = await fetch('/api/resume/audit/results');
+                if (!response.ok) throw new Error('Failed to load audit results');
+                const data = await response.json();
+                
+                if (data.overall_quality_score !== undefined && data.overall_quality_score !== null) {
+                    scoreCircle.innerText = data.overall_quality_score;
+                    scoreCircle.className = 'score-circle';
+                    if (data.overall_quality_score < 70) scoreCircle.classList.add('low');
+                    else if (data.overall_quality_score < 90) scoreCircle.classList.add('medium');
+                } else {
+                    scoreCircle.innerText = '-';
+                    scoreCircle.className = 'score-circle';
+                }
+                
+                issuesContainer.innerHTML = '';
+                
+                const findings = data.findings || [];
+                if (findings.length === 0) {
+                    issuesContainer.innerHTML = `
+                        <div class="issue-empty">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                            <p>${data.general_feedback || 'No issues found. Your resume is in excellent shape!'}</p>
+                        </div>
+                    `;
+                    if (btnTriggerFix) btnTriggerFix.disabled = true;
+                } else {
+                    findings.forEach(finding => {
+                        const item = document.createElement('div');
+                        const severity = (finding.severity || 'suggestion').toLowerCase();
+                        item.className = `issue-item ${severity}`;
+                        item.innerHTML = `
+                            <div class="issue-title">
+                                <span>📍 ${finding.location || 'Resume Section'}</span>
+                                <span class="issue-severity severity-${severity}">${severity}</span>
+                            </div>
+                            <div class="issue-desc" style="margin-bottom:0.25rem;"><strong>Issue:</strong> ${finding.description}</div>
+                            <div class="issue-desc" style="color:var(--accent-secondary);"><strong>Correction:</strong> ${finding.recommended_correction}</div>
+                        `;
+                        issuesContainer.appendChild(item);
+                    });
+                    if (btnTriggerFix) btnTriggerFix.disabled = false;
+                }
+            } catch (err) {
+                console.error('Error fetching audit results:', err);
+            }
+        }
+        
+        async function fetchResumeDiff() {
+            const diffContainer = document.getElementById('resumeDiffContainer');
+            if (!diffContainer) return;
+            
+            try {
+                diffContainer.innerHTML = '<span style="color:var(--text-muted);">Fetching proposed corrections diff from server...</span>';
+                const response = await fetch('/api/resume/diff', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success && data.diff) {
+                    const lines = data.diff.split('\n');
+                    const colorizedLines = lines.map(line => {
+                        const escaped = line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        if (line.startsWith('+')) {
+                            return `<div class="diff-line-added">${escaped}</div>`;
+                        } else if (line.startsWith('-')) {
+                            return `<div class="diff-line-removed">${escaped}</div>`;
+                        } else if (line.startsWith('@@') || line.startsWith('Index:') || line.startsWith('===')) {
+                            return `<div class="diff-line-header">${escaped}</div>`;
+                        }
+                        return `<div>${escaped}</div>`;
+                    });
+                    diffContainer.innerHTML = colorizedLines.join('');
+                } else {
+                    diffContainer.innerHTML = '<span style="color:#f87171;">Failed to generate diff. Run an audit first or try again.</span>';
+                }
+            } catch (err) {
+                diffContainer.innerHTML = `<span style="color:#f87171;">Error loading diff: ${err.message}</span>`;
+            }
+        }
+        
+        async function triggerResumeFix() {
+            const btn = document.getElementById('btnTriggerFix');
+            const btnText = document.getElementById('btnTriggerFixText');
+            
+            try {
+                if (!confirm("Are you sure you want to apply the proposed LaTeX corrections? This will modify Resume.tex and compile a new PDF.")) {
+                    return;
+                }
+                
+                if (btn) btn.disabled = true;
+                if (btnText) btnText.innerText = 'Applying fixes...';
+                showToast('Triggering Resume Fixer in background...', 'info');
+                
+                const response = await fetch('/api/resume/fix', { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Fixer started! Watch logs in the console panel.', 'success');
+                    selectAgentLog('resume_fixer');
+                    
+                    let fixCheckInterval = setInterval(async () => {
+                        const agentsResponse = await fetch('/api/agents');
+                        const agents = await agentsResponse.json();
+                        const fixer = agents.find(a => a.script === 'resume_fixer.py');
+                        
+                        if (fixer && fixer.status !== 'running') {
+                            clearInterval(fixCheckInterval);
+                            if (btn) btn.disabled = false;
+                            if (btnText) btnText.innerText = 'Apply Fixes';
+                            showToast('Fixer finished execution!', 'success');
+                            fetchResumeAuditResults();
+                            fetchResumeDiff();
+                        }
+                    }, 2000);
+                } else {
+                    showToast('Failed to start fixer: ' + data.error, 'error');
+                    if (btn) btn.disabled = false;
+                    if (btnText) btnText.innerText = 'Apply Fixes';
+                }
+            } catch (err) {
+                showToast('Error starting fixer: ' + err.message, 'error');
+                if (btn) btn.disabled = false;
+                if (btnText) btnText.innerText = 'Apply Fixes';
+            }
+        }
+        
+        async function triggerJobScraper() {
+            try {
+                showToast('Triggering Job Scraper in background...', 'info');
+                const response = await fetch('/api/jobs/scrape', { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('Job Scraper started successfully!', 'success');
+                    selectAgentLog('job_scraper');
+                } else {
+                    showToast('Scraper failed to start: ' + data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Error starting scraper: ' + err.message, 'error');
             }
         }
     </script>

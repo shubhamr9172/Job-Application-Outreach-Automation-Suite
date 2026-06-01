@@ -27,13 +27,16 @@ from dotenv import load_dotenv
 
 # Force UTF-8 stdout/stderr on Windows
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 # --- Constants ----------------------------------------------------------------
 AGENT_DIR = Path(__file__).parent.resolve()
 DATA_DIR = AGENT_DIR / "data"
-EXCEL_PATH = AGENT_DIR / "Consultancies.xlsx"
+EXCEL_PATH = DATA_DIR / "Consultancies.xlsx"
 DISCOVERED_FILE = DATA_DIR / "discovered_agencies.json"
 STATUS_FILE = DATA_DIR / "emailed_status.json"
 ENV_FILE = AGENT_DIR / ".env"

@@ -27,12 +27,19 @@ Thumbs.db
 .idea/
 
 # User Resumes & Private Context
-Resume.pdf
-Resume.tex
-*Career Context File*
+resumes/*
+!resumes/project_context.md
+
 
 # Tracking Data & Excel lists
 Consultancies.xlsx
 data/
 server.log
+logs/
 
+# Compiled resume binaries & archives
+resumes/*.pdf
+resumes/*.docx
+resumes/backups/
+resumes/archive/
+*.log

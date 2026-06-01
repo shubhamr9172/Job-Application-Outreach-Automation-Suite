@@ -24,8 +24,11 @@ from dotenv import load_dotenv
 
 # Force UTF-8 stdout/stderr on Windows to prevent encoding crashes
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 # --- Paths & Constants --------------------------------------------------------
 BASE_DIR = Path(__file__).parent.resolve()
@@ -47,8 +50,8 @@ def load_config() -> dict:
         "target_location": "India",
         "experience_level": "Mid-Senior",
         "search_keywords": "",
-        "resume_file_path": "Resume.tex",
-        "context_file_path": "# Shubham — Career Context File.md",
+        "resume_file_path": "resumes/Resume.tex",
+        "context_file_path": "resumes/career_context.md",
         "enabled_sources": ["google_ats", "naukri", "linkedin", "indeed"]
     }
     if CONFIG_FILE.exists():
@@ -93,8 +96,8 @@ def save_jobs(jobs: list, file_path: Path):
 
 def find_resume_and_context(config: dict) -> tuple[Path, Path]:
     """Find resume and career context files, falling back to auto-discovery if needed."""
-    resume_path = BASE_DIR / config.get("resume_file_path", "Resume.tex")
-    context_path = BASE_DIR / config.get("context_file_path", "# Shubham — Career Context File.md")
+    resume_path = BASE_DIR / config.get("resume_file_path", "resumes/Resume.tex")
+    context_path = BASE_DIR / config.get("context_file_path", "resumes/career_context.md")
 
     # Fallback resume discovery
     if not resume_path.exists():

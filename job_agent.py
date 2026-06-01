@@ -33,17 +33,35 @@ from pydantic import BaseModel, Field
 
 # Force UTF-8 stdout/stderr on Windows to avoid cp1252 encoding crashes
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 # --- Constants & Paths --------------------------------------------------------
 AGENT_DIR = Path(__file__).parent.resolve()
 DATA_DIR = AGENT_DIR / "data"
 ENV_FILE = AGENT_DIR / ".env"
-EXCEL_PATH = AGENT_DIR / "Consultancies.xlsx"
+CONFIG_FILE = DATA_DIR / "user_config.json"
+
+# Default fallback paths (now in subfolders)
+EXCEL_PATH = DATA_DIR / "Consultancies.xlsx"
 STATUS_FILE = DATA_DIR / "emailed_status.json"
-RESUME_PDF = AGENT_DIR / "Resume.pdf"
-CONTEXT_FILE = AGENT_DIR / "# Shubham — Career Context File.md"
+RESUME_PDF = AGENT_DIR / "resumes" / "Resume.pdf"
+CONTEXT_FILE = AGENT_DIR / "resumes" / "career_context.md"
+
+# Load customized paths from config if present
+if CONFIG_FILE.exists():
+    try:
+        config_data = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+        if "resume_file_path" in config_data:
+            tex_path = AGENT_DIR / config_data["resume_file_path"]
+            RESUME_PDF = tex_path.with_suffix(".pdf")
+        if "context_file_path" in config_data:
+            CONTEXT_FILE = AGENT_DIR / config_data["context_file_path"]
+    except Exception as e:
+        print(f"[WARN] Failed to load config path: {e}")
 
 GEMINI_MODEL = "gemini-2.5-flash"
 REPLY_TO_EMAIL = "shubhamreddy9172@gmail.com"  # Shubham's primary inbox

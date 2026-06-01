@@ -15,6 +15,7 @@ Requirements:
 """
 
 import sys
+import json
 import os
 import io
 import re
@@ -33,15 +34,36 @@ from google import genai
 
 # Force UTF-8 stdout/stderr on Windows to avoid cp1252 encoding crashes
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 # --- Config -------------------------------------------------------------------
 RESUME_DIR  = Path(__file__).parent.resolve()
-RESUME_TEX  = RESUME_DIR / "Resume.tex"
-CONTEXT_MD  = RESUME_DIR / "# Shubham — Career Context File.md"
-BACKUP_DIR  = RESUME_DIR / ".resume_backups"
-OUTPUT_PDF  = RESUME_DIR / "Resume.pdf"
+DATA_DIR    = RESUME_DIR / "data"
+CONFIG_FILE = DATA_DIR / "user_config.json"
+
+# Default fallback paths (now in resumes/ subfolder)
+RESUME_TEX  = RESUME_DIR / "resumes" / "Resume.tex"
+CONTEXT_MD  = RESUME_DIR / "resumes" / "career_context.md"
+BACKUP_DIR  = RESUME_DIR / "resumes" / "backups"
+OUTPUT_PDF  = RESUME_DIR / "resumes" / "Resume.pdf"
+
+# Load customized paths from config if present
+if CONFIG_FILE.exists():
+    try:
+        config_data = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+        if "resume_file_path" in config_data:
+            RESUME_TEX = RESUME_DIR / config_data["resume_file_path"]
+            OUTPUT_PDF = RESUME_TEX.with_suffix(".pdf")
+        if "context_file_path" in config_data:
+            CONTEXT_MD = RESUME_DIR / config_data["context_file_path"]
+        if "backup_dir_path" in config_data:
+            BACKUP_DIR = RESUME_DIR / config_data["backup_dir_path"]
+    except Exception as e:
+        print(f"[WARN] Failed to load config path: {e}")
 
 GEMINI_MODEL     = "gemini-2.5-flash"
 
@@ -67,9 +89,49 @@ def backup_resume() -> Path:
     """Create a timestamped backup of Resume.tex before modifying."""
     BACKUP_DIR.mkdir(exist_ok=True)
     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_path = BACKUP_DIR / f"Resume_{ts}.tex"
+    base_name = RESUME_TEX.stem
+    backup_path = BACKUP_DIR / f"{base_name}_{ts}.tex"
     shutil.copy2(RESUME_TEX, backup_path)
     return backup_path
+
+
+# Map .tex basenames to human-friendly PDF prefixes
+_PDF_NAME_MAP = {
+    "Resume":         "Shubham_Reddy",
+    "Resume_Support": "Shubham_Reddy_Support",
+}
+
+
+def get_formatted_date() -> str:
+    """Return date formatted like '1st_June'."""
+    now = datetime.date.today()
+    day = now.day
+    if 11 <= day <= 13:
+        suffix = "th"
+    else:
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
+    month = now.strftime("%B")
+    return f"{day}{suffix}_{month}"
+
+
+def save_dated_pdf_copy(pdf_path: Path) -> Path | None:
+    """Save a dated copy of the compiled PDF, e.g. Shubham_Reddy_1st_June.pdf.
+
+    The copy is placed in the same directory as the original PDF.
+    Only one copy per (track, date) is kept — a later compile on the
+    same day overwrites the earlier snapshot.
+    """
+    if not pdf_path.exists():
+        return None
+
+    tex_stem = pdf_path.stem  # e.g. "Resume" or "Resume_Support"
+    prefix = _PDF_NAME_MAP.get(tex_stem, f"Shubham_Reddy_{tex_stem}")
+    date_str = get_formatted_date()
+    dated_name = f"{prefix}_{date_str}.pdf"
+    dated_path = pdf_path.parent / dated_name
+
+    shutil.copy2(pdf_path, dated_path)
+    return dated_path
 
 
 def compute_hash(content: str) -> str:
@@ -412,7 +474,11 @@ def main():
     # -- Compile PDF --
     if not args.no_pdf:
         pdf_ok = compile_pdf(updated_latex, RESUME_TEX, OUTPUT_PDF)
-        if not pdf_ok:
+        if pdf_ok:
+            dated = save_dated_pdf_copy(OUTPUT_PDF)
+            if dated:
+                print(f"[SNAPSHOT] Dated copy saved: {dated.name}")
+        else:
             print("\n[TIP] You can compile manually at https://www.overleaf.com")
             print("  or install MiKTeX/TeXLive for local compilation.")
     else:

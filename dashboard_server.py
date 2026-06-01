@@ -25,26 +25,70 @@ from urllib.parse import parse_qs, urlparse
 import pandas as pd
 from dotenv import load_dotenv
 import pypdf
+import subprocess
+import time
+import contextlib
+
+# Import agent pipeline modules
+import orchestrator
+import mock_interview_agent
 
 # Force UTF-8 on Windows
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 # --- Constants & Paths --------------------------------------------------------
 AGENT_DIR = Path(__file__).parent.resolve()
 ENV_FILE = AGENT_DIR / ".env"
-EXCEL_PATH = AGENT_DIR / "Consultancies.xlsx"
 DATA_DIR = AGENT_DIR / "data"
+EXCEL_PATH = DATA_DIR / "Consultancies.xlsx"
 STATUS_FILE = DATA_DIR / "emailed_status.json"
 DISCOVERED_FILE = DATA_DIR / "discovered_agencies.json"
 USER_CONFIG_FILE = DATA_DIR / "user_config.json"
 DISCOVERED_JOBS_FILE = DATA_DIR / "discovered_jobs.json"
 TRACKED_JOBS_FILE = DATA_DIR / "jobs_tracker.json"
 PUBLIC_DIR = AGENT_DIR / "dashboard_public"
+AGENT_METRICS_FILE = DATA_DIR / "agent_metrics.json"
 
 PORT = 8000
 
+DEFAULT_AGENTS = {
+    "resume_auditor": {"name": "Resume Auditor", "description": "Audits the LaTeX resume for syntax errors, chronological gaps, and content consistency.", "script": "resume_auditor.py", "status": "idle", "last_run_status": "", "last_run_timestamp": "", "run_count": 0, "avg_latency_sec": 0.0},
+    "resume_fixer": {"name": "Resume Fixer", "description": "Applies auditor recommendations to the LaTeX source and compiles a new PDF.", "script": "resume_fixer.py", "status": "idle", "last_run_status": "", "last_run_timestamp": "", "run_count": 0, "avg_latency_sec": 0.0},
+    "resume_customizer": {"name": "Resume Customizer", "description": "Modifies resume sections dynamically via natural language prompts.", "script": "resume_agent.py", "status": "idle", "last_run_status": "", "last_run_timestamp": "", "run_count": 0, "avg_latency_sec": 0.0},
+    "jd_analyzer": {"name": "JD Analyzer", "description": "Extracts skills, responsibilities, suitability score, and interview prep questions from JDs.", "script": "jd_analyzer.py", "status": "idle", "last_run_status": "", "last_run_timestamp": "", "run_count": 0, "avg_latency_sec": 0.0},
+    "cover_letter_generator": {"name": "Cover Letter Gen", "description": "Generates a highly personalized, role-specific cover letter draft.", "script": "cover_letter_generator.py", "status": "idle", "last_run_status": "", "last_run_timestamp": "", "run_count": 0, "avg_latency_sec": 0.0},
+    "skill_gap_agent": {"name": "Skill Gap Agent", "description": "Formulates a weekly learning checklist and study path to fill technical gaps.", "script": "skill_gap_agent.py", "status": "idle", "last_run_status": "", "last_run_timestamp": "", "run_count": 0, "avg_latency_sec": 0.0},
+    "orchestrator": {"name": "Master Orchestrator", "description": "Sequences JD Analysis, Cover Letter Drafting, and Skill Gap Roadmap generation.", "script": "orchestrator.py", "status": "idle", "last_run_status": "", "last_run_timestamp": "", "run_count": 0, "avg_latency_sec": 0.0},
+    "job_scraper": {"name": "Job Scraper", "description": "Monitors ATS boards and scrapes job postings, matching them against candidate profiles.", "script": "job_scraper.py", "status": "idle", "last_run_status": "", "last_run_timestamp": "", "run_count": 0, "avg_latency_sec": 0.0},
+    "agency_scraper": {"name": "Agency Scraper", "description": "Discovers staffing and recruitment consultancies in target locations.", "script": "agency_scraper.py", "status": "idle", "last_run_status": "", "last_run_timestamp": "", "run_count": 0, "avg_latency_sec": 0.0},
+    "job_agent": {"name": "Cold Outreach Agent", "description": "Generates and sends personalized cold outreach emails with resumes attached.", "script": "job_agent.py", "status": "idle", "last_run_status": "", "last_run_timestamp": "", "run_count": 0, "avg_latency_sec": 0.0},
+    "mock_interviewer": {"name": "Mock Interviewer", "description": "Simulates conversational turn-based technical screening interviews.", "script": "mock_interview_agent.py", "status": "idle", "last_run_status": "", "last_run_timestamp": "", "run_count": 0, "avg_latency_sec": 0.0}
+}
+
+def load_agent_metrics() -> dict:
+    if AGENT_METRICS_FILE.exists():
+        try:
+            loaded = json.loads(AGENT_METRICS_FILE.read_text(encoding="utf-8"))
+            merged = {}
+            for k, default_val in DEFAULT_AGENTS.items():
+                merged[k] = default_val.copy()
+                if k in loaded:
+                    merged[k].update(loaded[k])
+            return merged
+        except Exception:
+            pass
+    return {k: v.copy() for k, v in DEFAULT_AGENTS.items()}
+
+def save_agent_metrics(metrics: dict):
+    try:
+        AGENT_METRICS_FILE.write_text(json.dumps(metrics, indent=2, ensure_ascii=False), encoding="utf-8")
+    except Exception as e:
+        print(f"[ERROR] Failed to save agent metrics: {e}")
 # --- Helper Functions ---------------------------------------------------------
 def load_config():
     """Load config and verify variables."""
@@ -168,6 +212,8 @@ def extract_email_address(from_str: str) -> str:
 # --- HTTP Request Handler ------------------------------------------------------
 class DashboardHandler(BaseHTTPRequestHandler):
     scraper_process = None
+    auditor_process = None
+    fixer_process = None
     
     def end_headers(self):
         # Restrict CORS to localhost to prevent malicious external websites from querying local data
@@ -197,6 +243,12 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.handle_get_jobs_status()
         elif path == "/api/jobs/discovered":
             self.handle_get_jobs_discovered()
+        elif path == "/api/agents":
+            self.handle_get_agents()
+        elif path == "/api/logs":
+            self.handle_get_logs()
+        elif path == "/api/resume/audit/results":
+            self.handle_resume_audit_results()
         else:
             # Serve Static Files
             self.handle_serve_static(path)
@@ -227,6 +279,18 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.handle_jobs_scrape()
         elif path == "/api/jobs/external-add":
             self.handle_external_add()
+        elif path == "/api/jobs/analyze":
+            self.handle_jobs_analyze()
+        elif path == "/api/jobs/save-cl":
+            self.handle_jobs_save_cl()
+        elif path == "/api/jobs/mock-interview":
+            self.handle_jobs_mock_interview()
+        elif path == "/api/resume/audit":
+            self.handle_resume_audit()
+        elif path == "/api/resume/diff":
+            self.handle_resume_diff()
+        elif path == "/api/resume/fix":
+            self.handle_resume_fix()
         else:
             self.send_error(404, "Endpoint not found")
 
@@ -603,8 +667,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
             "target_location": "India",
             "experience_level": "Mid-Senior",
             "search_keywords": "",
-            "resume_file_path": "Resume.tex",
-            "context_file_path": "# Shubham — Career Context File.md",
+            "resume_file_path": "resumes/Resume.tex",
+            "context_file_path": "resumes/career_context.md",
             "enabled_sources": ["google_ats", "naukri", "linkedin", "indeed"],
             "profile": {
                 "full_name": "",
@@ -1061,18 +1125,484 @@ class DashboardHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            import subprocess
-            # Start scraper in background
+            log_dir = AGENT_DIR / "logs"
+            log_dir.mkdir(exist_ok=True)
+            log_file = open(log_dir / "scraper_run.log", "w", encoding="utf-8")
+            
             DashboardHandler.scraper_process = subprocess.Popen(
                 [sys.executable, str(AGENT_DIR / "job_scraper.py")],
+                stdout=log_file,
+                stderr=log_file,
                 cwd=str(AGENT_DIR)
             )
+            
+            # Update metrics
+            metrics = load_agent_metrics()
+            metrics["job_scraper"]["status"] = "running"
+            metrics["job_scraper"]["run_count"] += 1
+            metrics["job_scraper"]["last_run_timestamp"] = datetime.datetime.now().isoformat()
+            save_agent_metrics(metrics)
+
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
             self.wfile.write(json.dumps({"success": True, "message": "Job scraper started in background"}).encode('utf-8'))
         except Exception as e:
             self.send_response(500)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode('utf-8'))
+
+    def handle_jobs_analyze(self):
+        """Runs the orchestrator pipeline for a specific job."""
+        content_length = int(self.headers.get('Content-Length', 0))
+        post_data = self.rfile.read(content_length)
+        try:
+            payload = json.loads(post_data.decode('utf-8'))
+            link = payload.get("link")
+            jd_text = payload.get("jd_text")
+            
+            if not link:
+                self.send_response(400)
+                self.end_headers()
+                self.wfile.write(b"Missing 'link'")
+                return
+
+            log_dir = AGENT_DIR / "logs"
+            log_dir.mkdir(exist_ok=True)
+            log_file_path = log_dir / "orchestrator.log"
+            
+            # Start timer
+            start_time = time.time()
+            
+            # Update metrics to running
+            metrics = load_agent_metrics()
+            metrics["orchestrator"]["status"] = "running"
+            metrics["orchestrator"]["run_count"] += 1
+            metrics["orchestrator"]["last_run_timestamp"] = datetime.datetime.now().isoformat()
+            
+            # Direct other sub-agents stats updates if needed, e.g. analyzer, cover_letter, skill_gap
+            metrics["jd_analyzer"]["run_count"] += 1
+            metrics["jd_analyzer"]["last_run_timestamp"] = datetime.datetime.now().isoformat()
+            metrics["cover_letter_generator"]["run_count"] += 1
+            metrics["cover_letter_generator"]["last_run_timestamp"] = datetime.datetime.now().isoformat()
+            metrics["skill_gap_agent"]["run_count"] += 1
+            metrics["skill_gap_agent"]["last_run_timestamp"] = datetime.datetime.now().isoformat()
+            save_agent_metrics(metrics)
+            
+            # Redirect stdout/stderr to orchestrator.log
+            with open(log_file_path, "w", encoding="utf-8") as f:
+                with contextlib.redirect_stdout(f), contextlib.redirect_stderr(f):
+                    updated_job = orchestrator.run_pipeline(link, jd_text)
+                    
+            # Update metrics to idle & success
+            latency = time.time() - start_time
+            metrics = load_agent_metrics()
+            metrics["orchestrator"]["status"] = "idle"
+            metrics["orchestrator"]["last_run_status"] = "success"
+            metrics["orchestrator"]["avg_latency_sec"] = (
+                (metrics["orchestrator"]["avg_latency_sec"] * (metrics["orchestrator"]["run_count"] - 1) + latency)
+                / metrics["orchestrator"]["run_count"]
+            )
+            
+            metrics["jd_analyzer"]["last_run_status"] = "success"
+            metrics["cover_letter_generator"]["last_run_status"] = "success"
+            metrics["skill_gap_agent"]["last_run_status"] = "success"
+            save_agent_metrics(metrics)
+            
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": True, "job": updated_job}, ensure_ascii=False).encode('utf-8'))
+        except Exception as e:
+            # Update metrics to idle & failure
+            try:
+                metrics = load_agent_metrics()
+                metrics["orchestrator"]["status"] = "idle"
+                metrics["orchestrator"]["last_run_status"] = "failure"
+                metrics["jd_analyzer"]["last_run_status"] = "failure"
+                metrics["cover_letter_generator"]["last_run_status"] = "failure"
+                metrics["skill_gap_agent"]["last_run_status"] = "failure"
+                save_agent_metrics(metrics)
+            except Exception:
+                pass
+            self.send_response(500)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode('utf-8'))
+
+    def handle_jobs_save_cl(self):
+        """Allows manual edits of the cover letter draft to be saved."""
+        content_length = int(self.headers.get('Content-Length', 0))
+        post_data = self.rfile.read(content_length)
+        try:
+            payload = json.loads(post_data.decode('utf-8'))
+            link = payload.get("link")
+            cover_letter = payload.get("cover_letter")
+            
+            if not link:
+                self.send_response(400)
+                self.end_headers()
+                self.wfile.write(b"Missing 'link'")
+                return
+            
+            # Load jobs tracker list
+            tracked_jobs = []
+            if TRACKED_JOBS_FILE.exists():
+                try:
+                    tracked_jobs = json.loads(TRACKED_JOBS_FILE.read_text(encoding="utf-8"))
+                except Exception:
+                    pass
+                    
+            updated = False
+            for j in tracked_jobs:
+                if j.get("link") == link:
+                    j["cover_letter"] = cover_letter
+                    j["updated_at"] = datetime.datetime.now().isoformat()
+                    updated = True
+                    break
+                    
+            if updated:
+                TRACKED_JOBS_FILE.write_text(json.dumps(tracked_jobs, indent=2, ensure_ascii=False), encoding="utf-8")
+                
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": updated}).encode('utf-8'))
+        except Exception as e:
+            self.send_response(500)
+            self.end_headers()
+            self.wfile.write(str(e).encode('utf-8'))
+
+    def handle_jobs_mock_interview(self):
+        """Handles multi-turn conversational mock interview session."""
+        content_length = int(self.headers.get('Content-Length', 0))
+        post_data = self.rfile.read(content_length)
+        try:
+            payload = json.loads(post_data.decode('utf-8'))
+            link = payload.get("link")
+            user_message = payload.get("message") # Can be None if initiating chat
+            
+            if not link:
+                self.send_response(400)
+                self.end_headers()
+                self.wfile.write(b"Missing 'link'")
+                return
+                
+            # Load the job from jobs_tracker
+            tracked_jobs = []
+            if TRACKED_JOBS_FILE.exists():
+                try:
+                    tracked_jobs = json.loads(TRACKED_JOBS_FILE.read_text(encoding="utf-8"))
+                except Exception:
+                    pass
+                    
+            job_entry = None
+            for j in tracked_jobs:
+                if j.get("link") == link:
+                    job_entry = j
+                    break
+                    
+            if not job_entry:
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b"Job not found in tracker")
+                return
+                
+            company = job_entry.get("company", "the Target Company")
+            role = job_entry.get("title", "Software Engineer")
+            description = job_entry.get("description", "")
+            chat_history = job_entry.get("interview_chat_history", [])
+            
+            # Check if reset flag is sent
+            if payload.get("reset"):
+                chat_history = []
+                user_message = None
+            
+            # Start timer & update metrics
+            start_time = time.time()
+            metrics = load_agent_metrics()
+            metrics["mock_interviewer"]["status"] = "running"
+            metrics["mock_interviewer"]["run_count"] += 1
+            metrics["mock_interviewer"]["last_run_timestamp"] = datetime.datetime.now().isoformat()
+            save_agent_metrics(metrics)
+
+            # Call the mock interview agent
+            interviewer_response, updated_history = mock_interview_agent.conduct_interview_turn(
+                company, role, description, chat_history, user_message
+            )
+            
+            # Update metrics
+            latency = time.time() - start_time
+            metrics = load_agent_metrics()
+            metrics["mock_interviewer"]["status"] = "idle"
+            metrics["mock_interviewer"]["last_run_status"] = "success"
+            metrics["mock_interviewer"]["avg_latency_sec"] = (
+                (metrics["mock_interviewer"]["avg_latency_sec"] * (metrics["mock_interviewer"]["run_count"] - 1) + latency)
+                / metrics["mock_interviewer"]["run_count"]
+            )
+            save_agent_metrics(metrics)
+
+            # Save updated history in job entry
+            job_entry["interview_chat_history"] = updated_history
+            TRACKED_JOBS_FILE.write_text(json.dumps(tracked_jobs, indent=2, ensure_ascii=False), encoding="utf-8")
+            
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps({
+                "success": True,
+                "response": interviewer_response,
+                "history": updated_history
+            }, ensure_ascii=False).encode('utf-8'))
+        except Exception as e:
+            try:
+                metrics = load_agent_metrics()
+                metrics["mock_interviewer"]["status"] = "idle"
+                metrics["mock_interviewer"]["last_run_status"] = "failure"
+                save_agent_metrics(metrics)
+            except Exception:
+                pass
+            self.send_response(500)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode('utf-8'))
+
+    def handle_get_agents(self):
+        metrics = load_agent_metrics()
+        
+        # Check active processes
+        # 1. Job Scraper
+        if DashboardHandler.scraper_process is not None:
+            if DashboardHandler.scraper_process.poll() is None:
+                metrics["job_scraper"]["status"] = "running"
+            else:
+                exit_code = DashboardHandler.scraper_process.poll()
+                metrics["job_scraper"]["status"] = "idle"
+                metrics["job_scraper"]["last_run_status"] = "success" if exit_code == 0 else "failure"
+                DashboardHandler.scraper_process = None
+                save_agent_metrics(metrics)
+                
+        # 2. Resume Auditor
+        if DashboardHandler.auditor_process is not None:
+            if DashboardHandler.auditor_process.poll() is None:
+                metrics["resume_auditor"]["status"] = "running"
+            else:
+                exit_code = DashboardHandler.auditor_process.poll()
+                metrics["resume_auditor"]["status"] = "idle"
+                metrics["resume_auditor"]["last_run_status"] = "success" if exit_code == 0 else "failure"
+                DashboardHandler.auditor_process = None
+                save_agent_metrics(metrics)
+                
+        # 3. Resume Fixer
+        if DashboardHandler.fixer_process is not None:
+            if DashboardHandler.fixer_process.poll() is None:
+                metrics["resume_fixer"]["status"] = "running"
+            else:
+                exit_code = DashboardHandler.fixer_process.poll()
+                metrics["resume_fixer"]["status"] = "idle"
+                metrics["resume_fixer"]["last_run_status"] = "success" if exit_code == 0 else "failure"
+                DashboardHandler.fixer_process = None
+                save_agent_metrics(metrics)
+                
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.end_headers()
+        self.wfile.write(json.dumps(list(metrics.values()), ensure_ascii=False).encode('utf-8'))
+
+    def handle_get_logs(self):
+        parsed_url = urlparse(self.path)
+        params = parse_qs(parsed_url.query)
+        agent = params.get("agent", [""])[0].strip()
+        lines_to_read = int(params.get("lines", ["100"])[0])
+        
+        # Validate agent to prevent directory traversal
+        allowed_agents = {
+            "job_scraper": "logs/scraper_run.log",
+            "agency_scraper": "logs/agency_scraper.log",
+            "resume_auditor": "logs/resume_auditor.log",
+            "resume_fixer": "logs/resume_fixer.log",
+            "orchestrator": "logs/orchestrator.log",
+            "server": "logs/server.log",
+            "job_agent": "logs/job_agent.log"
+        }
+        
+        if agent not in allowed_agents:
+            self.send_response(400)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(b"Invalid agent specified")
+            return
+            
+        log_path = AGENT_DIR / allowed_agents[agent]
+        
+        if not log_path.exists():
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(f"[System] No logs recorded yet for {agent}.".encode('utf-8'))
+            return
+            
+        try:
+            content = log_path.read_text(encoding="utf-8", errors="replace")
+            log_lines = content.splitlines()
+            last_lines = log_lines[-lines_to_read:]
+            output = "\n".join(last_lines)
+            
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(output.encode('utf-8'))
+        except Exception as e:
+            self.send_response(500)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(f"Error reading log file: {str(e)}".encode('utf-8'))
+
+    def handle_resume_audit_results(self):
+        results_file = DATA_DIR / "resume_audit_results.json"
+        if not results_file.exists():
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps({
+                "overall_quality_score": None,
+                "general_feedback": "No audit results available. Click 'Trigger Resume Audit' below to run an analysis.",
+                "findings": []
+            }, ensure_ascii=False).encode('utf-8'))
+            return
+            
+        try:
+            content = results_file.read_text(encoding="utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(content.encode('utf-8'))
+        except Exception as e:
+            self.send_response(500)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode('utf-8'))
+
+    def handle_resume_audit(self):
+        if DashboardHandler.auditor_process is not None and DashboardHandler.auditor_process.poll() is None:
+            self.send_response(400)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": False, "error": "Auditor is already running"}).encode('utf-8'))
+            return
+            
+        try:
+            config = {"search_keywords": ""}
+            if USER_CONFIG_FILE.exists():
+                try:
+                    config = json.loads(USER_CONFIG_FILE.read_text(encoding="utf-8"))
+                except Exception:
+                    pass
+            goal = config.get("search_keywords", "").strip() or "AI Engineer / Gen AI Developer"
+            
+            log_dir = AGENT_DIR / "logs"
+            log_dir.mkdir(exist_ok=True)
+            log_file = open(log_dir / "resume_auditor.log", "w", encoding="utf-8")
+            
+            DashboardHandler.auditor_process = subprocess.Popen(
+                [sys.executable, str(AGENT_DIR / "resume_auditor.py"), "--goal", goal],
+                stdout=log_file,
+                stderr=log_file,
+                cwd=str(AGENT_DIR)
+            )
+            
+            metrics = load_agent_metrics()
+            metrics["resume_auditor"]["status"] = "running"
+            metrics["resume_auditor"]["run_count"] += 1
+            metrics["resume_auditor"]["last_run_timestamp"] = datetime.datetime.now().isoformat()
+            save_agent_metrics(metrics)
+            
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": True, "message": "Auditor started in background"}).encode('utf-8'))
+        except Exception as e:
+            self.send_response(500)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode('utf-8'))
+
+    def handle_resume_diff(self):
+        try:
+            res = subprocess.run(
+                [sys.executable, str(AGENT_DIR / "resume_fixer.py"), "--diff-only"],
+                capture_output=True,
+                text=True,
+                cwd=str(AGENT_DIR),
+                encoding="utf-8",
+                errors="replace"
+            )
+            
+            output = res.stdout
+            diff_block = ""
+            
+            diff_start = "PROPOSED FIXES (DIFF):"
+            if diff_start in output:
+                diff_block = output.split(diff_start)[-1].strip()
+                diff_block = diff_block.split("[INFO]")[0].strip()
+                diff_block = re.sub(r'^-{10,}\s*', '', diff_block)
+                diff_block = re.sub(r'\s*-{10,}$', '', diff_block).strip()
+            else:
+                if "No findings or mistakes" in output or "Nothing to fix" in output:
+                    diff_block = "(No changes required. Your resume is 100% compliant with career context!)"
+                elif "Gemini API error: 429" in output or "429" in res.stderr:
+                    diff_block = "(Error: Gemini API Rate limit (429) hit. Please wait a moment and try again.)"
+                else:
+                    diff_block = output or res.stderr or "No diff output generated."
+                    
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": True, "diff": diff_block}, ensure_ascii=False).encode('utf-8'))
+        except Exception as e:
+            self.send_response(500)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode('utf-8'))
+
+    def handle_resume_fix(self):
+        if DashboardHandler.fixer_process is not None and DashboardHandler.fixer_process.poll() is None:
+            self.send_response(400)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": False, "error": "Fixer is already running"}).encode('utf-8'))
+            return
+            
+        try:
+            log_dir = AGENT_DIR / "logs"
+            log_dir.mkdir(exist_ok=True)
+            log_file = open(log_dir / "resume_fixer.log", "w", encoding="utf-8")
+            
+            proc = subprocess.Popen(
+                [sys.executable, str(AGENT_DIR / "resume_fixer.py")],
+                stdin=subprocess.PIPE,
+                stdout=log_file,
+                stderr=log_file,
+                cwd=str(AGENT_DIR)
+            )
+            proc.stdin.close()
+            
+            DashboardHandler.fixer_process = proc
+            
+            metrics = load_agent_metrics()
+            metrics["resume_fixer"]["status"] = "running"
+            metrics["resume_fixer"]["run_count"] += 1
+            metrics["resume_fixer"]["last_run_timestamp"] = datetime.datetime.now().isoformat()
+            save_agent_metrics(metrics)
+            
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": True, "message": "Fixer started in background"}).encode('utf-8'))
+        except Exception as e:
+            self.send_response(500)
+            self.send_header("Content-Type", "application/json")
             self.end_headers()
             self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode('utf-8'))
 

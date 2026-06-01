@@ -1,0 +1,29 @@
+Job Title: AIML Engineer
+Company: Cyfuture India Pvt. Ltd., NSEZ, Noida (Onsite)
+Company Website: www.cyfuture.com ; https://cyfuture.ai/ ; https://cyfuture.cloud/
+
+Cyfuture India Pvt. Ltd. is hiring a skilled AI/ML Engineer with 3+ years of hands-on experience in Artificial Intelligence and Machine Learning technologies.
+
+We are looking for a dynamic professional with strong expertise in building, deploying, and optimizing machine learning models, working with large datasets, and leveraging modern AI frameworks to deliver scalable, real-world solutions. Candidates should have a solid foundation in Python, ML algorithms, and experience with tools such as TensorFlow, PyTorch, or similar platforms, along with a passion for innovation in AI-driven products.
+
+Key Responsibilities:
+- Design and develop AI-powered voicebots for inbound and outbound calling use cases
+- Build and orchestrate agentic workflows using LLMs and external tool integrations
+- Integrate Speech-to-Text (STT) and Text-to-Speech (TTS) systems for real-time voice interactions
+- Develop multi-step reasoning pipelines using frameworks like Lang Chain
+- Implement context management, memory, and conversational state handling
+- Optimize LLM prompts for accuracy, latency, and token efficiency
+- Build and expose REST/MCP APIs for AI service integration
+- Ensure scalability, monitoring, and observability of AI pipelines.
+
+Skill Set:
+- Strong experience with LLMs (OpenAI, open-source models, etc.) and deployment on GPU servers.
+- Hands-on experience with Lang Chain or similar frameworks (LlamaIndex, Haystack)
+- Solid understanding of:
+  - Agentic workflows
+  - Tool calling
+  - RAG (Retrieval-Augmented Generation) pipelines
+  - Expertise in prompt engineering and evaluation techniques
+- Hands-on experience with Docker and Kubernetes
+- Understanding of GPU-based inference and optimization (nice to have)
+- Familiarity with cloud platforms (AWS / GCP / Azure).
