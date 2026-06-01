@@ -4,7 +4,7 @@ An enterprise-grade, end-to-end automation suite designed to streamline job disc
 
 The suite is anchored by a glassmorphic local Web Dashboard, powered by **11 specialized Google Gemini AI agents**, and utilizes stealthy crawlers.
 
-![Dashboard Web UI Mockup](file:///C:/Users/Supriya/.gemini/antigravity-ide/brain/a4d7bc19-2a8d-4068-a8e1-3764f13ab2f0/dashboard_ui_mockup_1780285421486.png)
+![Dashboard Web UI Mockup](docs/assets/dashboard_ui_mockup.png)
 
 ---
 
@@ -12,7 +12,7 @@ The suite is anchored by a glassmorphic local Web Dashboard, powered by **11 spe
 
 The suite uses a modular, event-driven agent architecture where each agent is responsible for a distinct phase of the job application lifecycle. The agents share state through local JSON datastores and are coordinated via the Web Dashboard or a CLI-driven Master Orchestrator.
 
-![System Architecture Diagram](file:///C:/Users/Supriya/.gemini/antigravity-ide/brain/a4d7bc19-2a8d-4068-a8e1-3764f13ab2f0/system_architecture_diagram_1780285368123.png)
+![System Architecture Diagram](docs/assets/system_architecture_diagram.png)
 
 ```mermaid
 graph TD
@@ -83,9 +83,9 @@ The **Mock Technical Interviewer Agent** uses the processed Job Description and 
 
 The suite features 11 purpose-built agents. Their CLI triggers and specifications are summarized below:
 
-![Resume Optimizer Agent Loop](file:///C:/Users/Supriya/.gemini/antigravity-ide/brain/a4d7bc19-2a8d-4068-a8e1-3764f13ab2f0/ai_agents_workflow_1780285387631.png)
+![Resume Optimizer Agent Loop](docs/assets/ai_agents_workflow.png)
 
-![Master Orchestrator Pipeline](file:///C:/Users/Supriya/.gemini/antigravity-ide/brain/a4d7bc19-2a8d-4068-a8e1-3764f13ab2f0/orchestrator_pipeline_1780285404005.png)
+![Master Orchestrator Pipeline](docs/assets/orchestrator_pipeline.png)
 
 | # | Agent Name | Implementation File | Responsibility | CLI Execution (Root Wrapper) |
 |---|---|---|---|---|
